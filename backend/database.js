@@ -41,6 +41,7 @@ async function initDB() {
   // Initialize daily stock items if not exists
   await db.run("INSERT OR IGNORE INTO stock (product_name, available_liters) VALUES ('Kacchi Ghani', 1000)");
   await db.run("INSERT OR IGNORE INTO stock (product_name, available_liters) VALUES ('Premium Filtered', 1000)");
+  await db.run("INSERT OR IGNORE INTO stock (product_name, available_liters) VALUES ('Yellow Mustard', 1000)");
 
   // Create Orders Table securely with verification status
   await db.exec(`
@@ -52,6 +53,22 @@ async function initDB() {
       total_amount REAL NOT NULL,
       payment_method TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'Pending Verification',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `);
+
+  // Create Addresses Table securely for Address Book
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS addresses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      pincode TEXT NOT NULL,
+      state TEXT NOT NULL,
+      city TEXT NOT NULL,
+      address TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );

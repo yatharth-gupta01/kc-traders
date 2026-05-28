@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
       setUser(newUser);
       localStorage.setItem('kc_token', data.token);
       localStorage.setItem('kc_user', JSON.stringify(newUser));
-      return { success: true };
+      return { success: true, role: data.role };
     } else {
       return { success: false, error: data.error };
     }
@@ -49,6 +49,8 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem('kc_token');
     localStorage.removeItem('kc_user');
+    localStorage.removeItem('kc_cart');
+    window.dispatchEvent(new Event('kc-logout'));
   };
 
   return (

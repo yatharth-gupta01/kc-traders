@@ -159,9 +159,89 @@ app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
     
     const { status } = req.body;
     try {
+        const order = await db.get(`SELECT status, items_data FROM orders WHERE id = ?`, [req.params.id]);
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found.' });
+        }
+
+        // Deduct stock only when order transitions to 'Accepted' and was not previously accepted
+        if (status === 'Accepted' && order.status !== 'Accepted' && order.status !== 'Verified') {
+            const items = JSON.parse(order.items_data);
+            
+            // Fetch all available daily production categories dynamically from the database
+            const stockRows = await db.all(`SELECT product_name FROM stock`);
+            
+            // 1. Calculate total required liters for each stock type in this order
+            const requiredStock = {};
+            for (const item of items) {
+                let stockType = null;
+                const nameLower = item.name.toLowerCase();
+                
+                // Dynamically match any registered stock category that is a substring of the ordered item name
+                for (const row of stockRows) {
+                    if (nameLower.includes(row.product_name.toLowerCase())) {
+                        stockType = row.product_name;
+                        break;
+                    }
+                }
+                
+                // Secure fallback matching logic for current catalog IDs
+                if (!stockType) {
+                    if (item.id === 'kcm-01' || item.id === 'kcm-03') {
+                        stockType = 'Kacchi Ghani';
+                    } else if (item.id === 'kcm-02' || item.id === 'kcm-04') {
+                        stockType = 'Premium Filtered';
+                    } else if (item.id === 'kcm-05' || item.id === 'kcm-06') {
+                        stockType = 'Yellow Mustard';
+                    }
+                }
+                
+                if (stockType) {
+                    let volumeLiters = 1;
+                    if (item.volume) {
+                        const parsedVolume = parseFloat(item.volume.replace(/[^\d.]/g, ''));
+                        if (!isNaN(parsedVolume)) {
+                            volumeLiters = parsedVolume;
+                        }
+                    } else {
+                        const volumeMatch = item.name.match(/(\d+)\s*L/i);
+                        if (volumeMatch) {
+                            volumeLiters = parseFloat(volumeMatch[1]);
+                        }
+                    }
+
+                    const totalLiters = volumeLiters * item.quantity;
+                    requiredStock[stockType] = (requiredStock[stockType] || 0) + totalLiters;
+                }
+            }
+
+            // 2. Validate stock levels in database prior to accepting
+            for (const [stockType, requiredLiters] of Object.entries(requiredStock)) {
+                const stockRow = await db.get(`SELECT available_liters FROM stock WHERE product_name = ?`, [stockType]);
+                const available = stockRow ? stockRow.available_liters : 0;
+                
+                if (available < requiredLiters) {
+                    return res.status(400).json({ 
+                        error: `Insufficient stock for ${stockType}. Required: ${requiredLiters}L, Available: ${available}L.` 
+                    });
+                }
+            }
+
+            // 3. Deduct stock securely
+            for (const [stockType, deductionLiters] of Object.entries(requiredStock)) {
+                await db.run(
+                    `UPDATE stock 
+                     SET available_liters = available_liters - ?, last_updated = CURRENT_TIMESTAMP 
+                     WHERE product_name = ?`,
+                    [deductionLiters, stockType]
+                );
+            }
+        }
+
         await db.run(`UPDATE orders SET status = ? WHERE id = ?`, [status, req.params.id]);
-        res.json({ message: `Order marked as ${status} successfully.` });
+        res.json({ message: `Order marked as ${status} successfully and stock deducted accordingly.` });
     } catch (err) {
+        console.error("Order verification error:", err);
         res.status(500).json({ error: 'Failed to update order status.' });
     }
 });
@@ -170,7 +250,7 @@ app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
 // STOCK MANAGEMENT API (Admin Only)
 // ============================================
 
-app.get('/api/stock', authenticateToken, async (req, res) => {
+app.get('/api/stock', async (req, res) => {
     try {
         const stock = await db.all(`SELECT * FROM stock`);
         res.json(stock);
@@ -196,7 +276,73 @@ app.post('/api/stock', authenticateToken, async (req, res) => {
     }
 });
 
+// ============================================
+// USER MANAGEMENT API (Admin Only)
+// ============================================
+app.get('/api/users', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Unauthorized. Factory Admin only.' });
+    }
+    try {
+        const users = await db.all(`SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC`);
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch users.' });
+    }
+});
+
+// ============================================
+// ADDRESS BOOK API (Authenticated Users Only)
+// ============================================
+
+// Fetch saved addresses
+app.get('/api/addresses', authenticateToken, async (req, res) => {
+    try {
+        const addresses = await db.all(
+            `SELECT * FROM addresses WHERE user_id = ? ORDER BY created_at DESC`,
+            [req.user.id]
+        );
+        res.json(addresses);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch saved addresses.' });
+    }
+});
+
+// Save a new address (Checks for exact duplicates to prevent spam)
+app.post('/api/addresses', authenticateToken, async (req, res) => {
+    const { name, phone, pincode, state, city, address } = req.body;
+    
+    if (!name || !phone || !pincode || !state || !city || !address) {
+        return res.status(400).json({ error: 'All delivery address fields are required.' });
+    }
+
+    try {
+        // Prevent duplicate addresses for the same user
+        const existing = await db.get(
+            `SELECT id FROM addresses 
+             WHERE user_id = ? AND name = ? AND phone = ? AND pincode = ? AND state = ? AND city = ? AND address = ?`,
+            [req.user.id, name, phone, pincode, state, city, address]
+        );
+
+        if (existing) {
+            return res.json({ message: 'Address already exists in Address Book.', addressId: existing.id });
+        }
+
+        const result = await db.run(
+            `INSERT INTO addresses (user_id, name, phone, pincode, state, city, address) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [req.user.id, name, phone, pincode, state, city, address]
+        );
+
+        res.status(201).json({ message: 'Address saved successfully.', addressId: result.lastID });
+    } catch (err) {
+        console.error("Save address error:", err);
+        res.status(500).json({ error: 'Failed to securely save address.' });
+    }
+});
+
 // Start Server
 app.listen(PORT, () => {
     console.log(`Backend vault locked. Server running on security port ${PORT}`);
 });
+

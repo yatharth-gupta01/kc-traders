@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Moon, Sun, Droplet, ShoppingBag, LogIn, LogOut, Store, User } from 'lucide-react';
+import { Menu, X, Moon, Sun, Droplet, ShoppingBag, LogIn, LogOut, Store, User, Search } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -28,6 +28,16 @@ const Navbar = () => {
 
   const navLinks = [
     { name: 'Home', href: '/' },
+    ...(user?.role === 'admin' 
+      ? [
+          { name: 'Users', href: '/users' },
+          { name: 'Dashboard', href: '/dashboard' }
+        ] 
+      : (user 
+          ? [{ name: 'My Orders', href: '/dashboard' }]
+          : []
+        )
+    ),
     { name: 'Shop Products', href: '/shop' },
   ];
 
@@ -56,9 +66,24 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8 flex-1 justify-end">
+          
+          {/* Global Search Bar */}
+          <div className="relative group hidden lg:block mr-2">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="w-4 h-4 text-slate-400 group-focus-within:text-mustard-500 transition-colors" />
+            </div>
+            <input 
+               type="text" 
+               placeholder="Search oils..." 
+               className="pl-10 pr-4 py-2 w-48 xl:w-64 bg-slate-100 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-full text-sm focus:outline-none focus:border-mustard-500 focus:ring-1 focus:ring-mustard-500 transition-all placeholder:text-slate-500 dark:text-white"
+            />
+          </div>
+
           <ul className="flex items-center gap-6">
-            {navLinks.map((link) => (
+            {navLinks
+              .filter(link => !(user?.role === 'admin' && link.name === 'Shop Products'))
+              .map((link) => (
               <li key={link.name}>
                 <Link 
                   to={link.href} 
@@ -75,18 +100,20 @@ const Navbar = () => {
           </ul>
           
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setIsCartOpen(true)}
-              className="relative p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors interactive"
-              aria-label="Open Cart"
-            >
-              <ShoppingBag className="w-5 h-5 text-slate-700 dark:text-slate-300" />
-              {cartItemCount > 0 && (
-                <span className="absolute 0 top-0 right-0 transform translate-x-1/4 -translate-y-1/4 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-earth-dark">
-                  {cartItemCount}
-                </span>
-              )}
-            </button>
+            {user && user.role !== 'admin' && (
+              <button 
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors interactive"
+                aria-label="Open Cart"
+              >
+                <ShoppingBag className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+                {cartItemCount > 0 && (
+                  <span className="absolute 0 top-0 right-0 transform translate-x-1/4 -translate-y-1/4 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-earth-dark">
+                    {cartItemCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             {user ? (
               <div className="flex items-center gap-4 ml-2 border-l pl-4 border-slate-200 dark:border-slate-800">
@@ -118,18 +145,20 @@ const Navbar = () => {
 
         {/* Mobile Toggle */}
         <div className="md:hidden flex items-center gap-4 z-50">
-          <button 
-            onClick={() => setIsCartOpen(true)}
-            className="relative p-1 interactive"
-            aria-label="Open Cart"
-          >
-            <ShoppingBag className="w-6 h-6 text-slate-800 dark:text-white" />
-            {cartItemCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                {cartItemCount}
-              </span>
-            )}
-          </button>
+          {user && user.role !== 'admin' && (
+            <button 
+              onClick={() => setIsCartOpen(true)}
+              className="relative p-1 interactive"
+              aria-label="Open Cart"
+            >
+              <ShoppingBag className="w-6 h-6 text-slate-800 dark:text-white" />
+              {cartItemCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {cartItemCount}
+                </span>
+              )}
+            </button>
+          )}
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-1 interactive text-slate-800 dark:text-white"
@@ -149,7 +178,9 @@ const Navbar = () => {
             className="fixed inset-0 z-40 bg-white/95 dark:bg-earth-dark/95 backdrop-blur-xl md:hidden pt-24 px-6 flex flex-col"
           >
             <ul className="flex flex-col gap-6 text-center">
-              {navLinks.map((link, i) => (
+              {navLinks
+                 .filter(link => !(user?.role === 'admin' && link.name === 'Shop Products'))
+                 .map((link, i) => (
                 <motion.li 
                   key={link.name}
                   initial={{ opacity: 0, y: 20 }}

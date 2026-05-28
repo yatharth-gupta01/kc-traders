@@ -1,8 +1,26 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Products = () => {
+  const [stockList, setStockList] = useState([]);
+
+  useEffect(() => {
+    const fetchStock = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/stock');
+        if (res.ok) {
+          const data = await res.json();
+          setStockList(data);
+        }
+      } catch (e) {
+        console.error("Failed to fetch stock for home products", e);
+      }
+    };
+    fetchStock();
+  }, []);
+
   const products = [
     {
       id: 1,
@@ -21,8 +39,25 @@ const Products = () => {
       description: "Carefully filtered to remove impurities while preserving the essential nutrients, making it ideal for deep frying and daily household cooking.",
       features: ['Light Taste', 'High Smoke Point', 'Heart Healthy'],
       color: "from-amber-600 to-amber-400"
+    },
+    {
+      id: 3,
+      name: "Yellow Mustard Oil",
+      subtitle: "Mild, Sweet & Gourmet",
+      image: "/assets/product_oil.png",
+      description: "Cold-pressed from select yellow mustard seeds to provide a milder, sweeter flavor profile with complete nutritional value and health protection.",
+      features: ['Mild Aroma', 'Buttery Taste', 'Organic Seeds'],
+      color: "from-yellow-600 to-yellow-400"
     }
-  ];
+  ].filter(p => {
+    if (stockList.length === 0) return true; // Show while loading to prevent flicker
+    let category = '';
+    if (p.id === 1) category = 'Kacchi Ghani';
+    else if (p.id === 2) category = 'Premium Filtered';
+    else if (p.id === 3) category = 'Yellow Mustard';
+    const stockRow = stockList.find(s => s.product_name === category);
+    return stockRow ? stockRow.available_liters >= 1 : true;
+  });
 
   return (
     <section id="products" className="py-24 bg-white dark:bg-[#231710] relative">

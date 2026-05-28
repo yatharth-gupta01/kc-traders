@@ -6,20 +6,25 @@ const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(() => {
+    const storedCart = localStorage.getItem('kc_cart');
+    return storedCart ? JSON.parse(storedCart) : [];
+  });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { user } = useAuth();
-
-  useEffect(() => {
-    const storedCart = localStorage.getItem('kc_cart');
-    if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
-    }
-  }, []);
+  const [prevUser, setPrevUser] = useState(user);
 
   useEffect(() => {
     localStorage.setItem('kc_cart', JSON.stringify(cartItems));
   }, [cartItems]);
+
+  useEffect(() => {
+    if (prevUser && !user) {
+      setCartItems([]);
+      localStorage.removeItem('kc_cart');
+    }
+    setPrevUser(user);
+  }, [user, prevUser]);
 
   const addToCart = (product, quantity = 1) => {
     setCartItems(prev => {

@@ -28,7 +28,7 @@ const Login = () => {
     } else {
         const res = await login(formData.email, formData.password);
         if (res.success) {
-            navigate('/shop'); // Dashboard handled if needed
+            navigate(res.role === 'admin' ? '/dashboard' : '/shop');
         } else {
             setErrorMsg(res.error);
         }

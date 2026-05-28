@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KC Traders – Pure Mustard Oil | Bhind, Madhya Pradesh</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --gold: #C8821A;
+      --gold-light: #E5A535;
+      --gold-pale: #F7DFA0;
+      --cream: #FDF6E3;
+      --cream-dark: #F5EBD0;
+      --brown: #3D1F00;
+      --brown-mid: #6B3A10;
+      --green: #1E5C2E;
+      --green-light: #2D7A40;
+      --white: #FFFFFF;
+      --text: #2A1500;
+      --text-muted: #7A5B3A;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ─── NOISE TEXTURE OVERLAY ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.4;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(61, 31, 0, 0.96);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5%;
+      height: 64px;
+      border-bottom: 1px solid rgba(200, 130, 26, 0.3);
+    }
+
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      letter-spacing: 1px;
+      text-decoration: none;
+    }
+
+    .nav-logo span {
+      color: var(--white);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--gold-light);
+    }
+
+    .nav-cta {
+      background: var(--gold);
+      color: var(--white) !important;
+      padding: 7px 18px;
+      border-radius: 4px;
+      font-weight: 700 !important;
+    }
+
+    .nav-cta:hover {
+      background: var(--gold-light);
+      color: var(--brown) !important;
+    }
+
+    /* ─── HERO ─── */
+    #home {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 70% 50%, rgba(200, 130, 26, 0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at 10% 80%, rgba(30, 92, 46, 0.12) 0%, transparent 50%),
+        linear-gradient(160deg, #2A1000 0%, #3D1F00 40%, #5C3010 100%);
+      display: flex;
+      align-items: center;
+      padding: 0 8%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-pattern {
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(200, 130, 26, 0.04) 40px, rgba(200, 130, 26, 0.04) 41px),
+        repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(200, 130, 26, 0.04) 40px, rgba(200, 130, 26, 0.04) 41px);
+    }
+
+    .hero-circle {
+      position: absolute;
+      right: -5%;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 40%, rgba(200, 130, 26, 0.22), rgba(200, 130, 26, 0.06));
+      border: 1px solid rgba(200, 130, 26, 0.2);
+    }
+
+    .hero-circle::before {
+      content: '';
+      position: absolute;
+      inset: 30px;
+      border-radius: 50%;
+      border: 1px solid rgba(200, 130, 26, 0.15);
+    }
+
+    .hero-circle::after {
+      content: '🌿';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9rem;
+      opacity: 0.15;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 640px;
+      animation: fadeUp 1s ease both;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(200, 130, 26, 0.2);
+      border: 1px solid rgba(200, 130, 26, 0.5);
+      color: var(--gold-light);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+      font-size: clamp(2.8rem, 5vw, 4.5rem);
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    .hero-title .highlight {
+      color: var(--gold-light);
+      display: block;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: rgba(255, 255, 255, 0.72);
+      line-height: 1.7;
+      margin-bottom: 2.2rem;
+      max-width: 500px;
+    }
+
+    .hero-subtitle .hindi {
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 1rem;
+      display: block;
+      margin-top: 0.4rem;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--brown);
+      font-weight: 700;
+      padding: 13px 28px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 20px rgba(200, 130, 26, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(200, 130, 26, 0.5);
+    }
+
+    .btn-secondary {
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      color: var(--white);
+      font-weight: 600;
+      padding: 13px 28px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--gold-light);
+      background: rgba(200, 130, 26, 0.1);
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.5);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* ─── SECTION COMMONS ─── */
+    section {
+      padding: 90px 8%;
+    }
+
+    .section-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--green);
+      background: rgba(30, 92, 46, 0.1);
+      border: 1px solid rgba(30, 92, 46, 0.2);
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 700;
+      color: var(--brown);
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+
+    .section-title .gold {
+      color: var(--gold);
+    }
+
+    .section-sub {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 560px;
+    }
+
+    /* ─── ABOUT ─── */
+    #about {
+      background: var(--white);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: center;
+    }
+
+    .about-image-box {
+      position: relative;
+    }
+
+    .about-image-placeholder {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: linear-gradient(135deg, var(--cream-dark), var(--gold-pale));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 6rem;
+      border: 1px solid rgba(200, 130, 26, 0.2);
+      box-shadow: 0 20px 60px rgba(61, 31, 0, 0.1);
+    }
+
+    .about-badge-float {
+      position: absolute;
+      bottom: -20px;
+      right: -20px;
+      background: var(--green);
+      color: var(--white);
+      padding: 18px 22px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(30, 92, 46, 0.3);
+    }
+
+    .about-badge-float .num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      display: block;
+    }
+
+    .about-badge-float .lbl {
+      font-size: 0.78rem;
+      opacity: 0.85;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .about-text {}
+
+    .about-text p {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin-bottom: 1.2rem;
+    }
+
+    .about-text p strong {
+      color: var(--brown);
+    }
+
+    .about-pillars {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.8rem;
+    }
+
+    .pillar {
+      background: var(--cream);
+      border: 1px solid var(--cream-dark);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .pillar-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .pillar-title {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--brown);
+    }
+
+    .pillar-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ─── PRODUCTS ─── */
+    #products {
+      background: linear-gradient(180deg, var(--cream) 0%, var(--cream-dark) 100%);
+      text-align: center;
+    }
+
+    #products .section-sub {
+      margin: 0 auto 3.5rem;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.8rem;
+      margin-top: 3rem;
+      text-align: left;
+    }
+
+    .product-card {
+      background: var(--white);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(200, 130, 26, 0.15);
+      box-shadow: 0 4px 20px rgba(61, 31, 0, 0.06);
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+    }
+
+    .product-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 40px rgba(61, 31, 0, 0.12);
+    }
+
+    .product-card-header {
+      padding: 28px 24px 20px;
+      background: linear-gradient(135deg, var(--cream), var(--gold-pale));
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid rgba(200, 130, 26, 0.15);
+    }
+
+    .product-icon {
+      font-size: 2.5rem;
+    }
+
+    .product-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--brown);
+      line-height: 1.2;
+    }
+
+    .product-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .product-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: var(--green);
+      color: var(--white);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    .product-body {
+      padding: 20px 24px 24px;
+    }
+
+    .product-sizes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .size-tag {
+      background: var(--cream);
+      border: 1px solid var(--gold-pale);
+      color: var(--brown-mid);
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 4px;
+    }
+
+    .product-features {
+      list-style: none;
+    }
+
+    .product-features li {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      padding: 5px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .product-features li::before {
+      content: '✓';
+      color: var(--green);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .product-cta {
+      display: block;
+      margin-top: 1.2rem;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--brown);
+      text-align: center;
+      font-weight: 700;
+      padding: 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.88rem;
+      transition: opacity 0.2s;
+    }
+
+    .product-cta:hover {
+      opacity: 0.88;
+    }
+
+    /* ─── DEALERS ─── */
+    #dealers {
+      background: linear-gradient(135deg, #1A3A22 0%, #0F2015 100%);
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dealers-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at 20% 50%, rgba(200, 130, 26, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(200, 130, 26, 0.06) 0%, transparent 40%);
+    }
+
+    #dealers .section-tag {
+      color: var(--gold-light);
+      background: rgba(200, 130, 26, 0.15);
+      border-color: rgba(200, 130, 26, 0.3);
+    }
+
+    #dealers .section-title {
+      color: var(--white);
+    }
+
+    #dealers .section-sub {
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .dealers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+      margin-top: 3.5rem;
+      position: relative;
+    }
+
+    .dealers-benefits {}
+
+    .benefit-item {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.6rem;
+      align-items: flex-start;
+    }
+
+    .benefit-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      line-height: 1;
+      min-width: 36px;
+    }
+
+    .benefit-title {
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+
+    .benefit-desc {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.6);
+      line-height: 1.6;
+    }
+
+    .dealers-cta-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(200, 130, 26, 0.25);
+      border-radius: 16px;
+      padding: 2.5rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .dealers-cta-box h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem;
+      color: var(--gold-light);
+      margin-bottom: 1rem;
+    }
+
+    .dealers-cta-box p {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.65);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+
+    .whatsapp-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #25D366;
+      color: var(--white);
+      font-weight: 700;
+      padding: 13px 22px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      width: 100%;
+      justify-content: center;
+      transition: opacity 0.2s;
+      margin-bottom: 0.8rem;
+    }
+
+    .whatsapp-btn:hover {
+      opacity: 0.88;
+    }
+
+    .whatsapp-icon {
+      font-size: 1.3rem;
+    }
+
+    .call-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1.5px solid rgba(200, 130, 26, 0.4);
+      color: var(--gold-light);
+      font-weight: 700;
+      padding: 12px 22px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      width: 100%;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .call-btn:hover {
+      background: rgba(200, 130, 26, 0.1);
+    }
+
+    /* ─── CONSUMERS ─── */
+    #consumers {
+      background: var(--white);
+    }
+
+    .consumers-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: center;
+    }
+
+    .consumer-card-list {
+      margin-top: 1.5rem;
+    }
+
+    .consumer-card {
+      background: var(--cream);
+      border: 1px solid var(--cream-dark);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .consumer-card:hover {
+      border-color: var(--gold-pale);
+      box-shadow: 0 4px 16px rgba(200, 130, 26, 0.1);
+    }
+
+    .consumer-icon {
+      font-size: 1.8rem;
+      flex-shrink: 0;
+    }
+
+    .consumer-title {
+      font-weight: 700;
+      color: var(--brown);
+      margin-bottom: 4px;
+      font-size: 0.97rem;
+    }
+
+    .consumer-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .consumer-order-box {
+      background: linear-gradient(135deg, var(--cream-dark), var(--gold-pale));
+      border: 1px solid rgba(200, 130, 26, 0.25);
+      border-radius: 20px;
+      padding: 2.5rem;
+      text-align: center;
+    }
+
+    .consumer-order-box .emoji {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .consumer-order-box h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.9rem;
+      color: var(--brown);
+      margin-bottom: 0.8rem;
+    }
+
+    .consumer-order-box p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+
+    .consumer-order-box .steps {
+      list-style: none;
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+
+    .consumer-order-box .steps li {
+      font-size: 0.9rem;
+      color: var(--brown-mid);
+      padding: 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px dashed rgba(200, 130, 26, 0.2);
+    }
+
+    .consumer-order-box .steps li:last-child {
+      border-bottom: none;
+    }
+
+    .step-num {
+      background: var(--green);
+      color: var(--white);
+      font-size: 0.72rem;
+      font-weight: 700;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ─── SITEMAP / GUIDANCE ─── */
+    #sitemap {
+      background: var(--cream-dark);
+    }
+
+    .sitemap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.2rem;
+      margin-top: 2.5rem;
+    }
+
+    .sitemap-card {
+      background: var(--white);
+      border: 1px solid rgba(200, 130, 26, 0.12);
+      border-radius: 12px;
+      padding: 1.4rem;
+    }
+
+    .sitemap-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0.8rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid var(--cream-dark);
+    }
+
+    .sitemap-icon {
+      font-size: 1.4rem;
+    }
+
+    .sitemap-name {
+      font-weight: 700;
+      color: var(--brown);
+      font-size: 0.95rem;
+    }
+
+    .sitemap-points {
+      list-style: none;
+    }
+
+    .sitemap-points li {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 3px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      line-height: 1.5;
+    }
+
+    .sitemap-points li::before {
+      content: '→';
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    /* ─── GUIDANCE ─── */
+    #guidance {
+      background: var(--white);
+    }
+
+    .guidance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+    }
+
+    .guidance-card {
+      border: 1px solid var(--cream-dark);
+      border-radius: 14px;
+      padding: 1.8rem;
+      background: var(--cream);
+    }
+
+    .guidance-card h4 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      color: var(--brown);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .guidance-card p,
+    .guidance-card li {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .guidance-card ul {
+      padding-left: 1.2rem;
+      margin-top: 0.5rem;
+    }
+
+    .guidance-card li {
+      margin-bottom: 4px;
+    }
+
+    .platform-tag {
+      display: inline-block;
+      background: var(--gold-pale);
+      color: var(--brown-mid);
+      border: 1px solid var(--gold-pale);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 4px;
+      margin-right: 6px;
+      margin-top: 6px;
+    }
+
+    /* ─── CONTACT ─── */
+    #contact {
+      background: linear-gradient(160deg, var(--brown) 0%, #1A0A00 100%);
+      color: var(--white);
+      text-align: center;
+    }
+
+    #contact .section-tag {
+      color: var(--gold-light);
+      background: rgba(200, 130, 26, 0.15);
+      border-color: rgba(200, 130, 26, 0.3);
+    }
+
+    #contact .section-title {
+      color: var(--white);
+    }
+
+    #contact .section-sub {
+      color: rgba(255, 255, 255, 0.6);
+      margin: 0 auto 3rem;
+    }
+
+    .contact-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      max-width: 900px;
+      margin: 0 auto 3rem;
+    }
+
+    .contact-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(200, 130, 26, 0.2);
+      border-radius: 14px;
+      padding: 2rem;
+      transition: background 0.2s;
+    }
+
+    .contact-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .contact-card .icon {
+      font-size: 2rem;
+      margin-bottom: 0.8rem;
+      display: block;
+    }
+
+    .contact-card h4 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      color: var(--gold-light);
+      margin-bottom: 0.4rem;
+    }
+
+    .contact-card p {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 0.4rem;
+      line-height: 1.5;
+    }
+
+    .contact-card a {
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .final-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: #25D366;
+      color: var(--white);
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 16px 36px;
+      border-radius: 8px;
+      text-decoration: none;
+      box-shadow: 0 6px 30px rgba(37, 211, 102, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-bottom: 0.8rem;
+    }
+
+    .final-whatsapp:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(37, 211, 102, 0.4);
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: #0A0500;
+      color: rgba(255, 255, 255, 0.4);
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.82rem;
+    }
+
+    footer span {
+      color: var(--gold);
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+
+      #about,
+      .dealers-grid,
+      .consumers-inner {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+      }
+
+      .about-image-placeholder {
+        aspect-ratio: 16/9;
+      }
+
+      .about-badge-float {
+        right: 0;
+        bottom: -16px;
+      }
+
+      .hero-circle {
+        display: none;
+      }
+
+      nav {
+        padding: 0 4%;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      section {
+        padding: 60px 5%;
+      }
+
+      .hero-stats {
+        gap: 1.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ─── NAVIGATION ─── -->
+  <nav>
+    <a class="nav-logo" href="#home">KC <span>Traders</span></a>
+    <ul class="nav-links">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#products">Products</a></li>
+      <li><a href="#dealers">For Dealers</a></li>
+      <li><a href="#consumers">For Consumers</a></li>
+      <li><a href="#contact" class="nav-cta">Order Now</a></li>
+    </ul>
+  </nav>
+
+  <!-- ─── HERO ─── -->
+  <section id="home">
+    <div class="hero-pattern"></div>
+    <div class="hero-circle"></div>
+    <div class="hero-content">
+      <div class="hero-badge">🌿 Bhind, Madhya Pradesh</div>
+      <h1 class="hero-title">
+        शुद्ध सरसों का तेल,
+        <span class="highlight">Straight from Our Factory.</span>
+      </h1>
+      <p class="hero-subtitle">
+        KC Traders brings you premium-quality mustard oil — pure, authentic, and pressed the traditional way. Trusted by
+        shops, distributors, and families across the region.
+        <span class="hindi">दुकानदार हों या घर के लिए — हमारा तेल, आपकी पहली पसंद।</span>
+      </p>
+      <div class="hero-btns">
+        <a href="#products" class="btn-primary">🛢 Explore Products</a>
+        <a href="#contact" class="btn-secondary">📞 Order on WhatsApp</a>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="stat-num">100%</div>
+          <div class="stat-label">Pure & Natural</div>
+        </div>
+        <div>
+          <div class="stat-num">4+</div>
+          <div class="stat-label">Product Variants</div>
+        </div>
+        <div>
+          <div class="stat-num">Bulk</div>
+          <div class="stat-label">Wholesale Available</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── ABOUT ─── -->
+  <section id="about">
+    <div class="about-image-box">
+      <div class="about-image-placeholder">🌾</div>
+      <div class="about-badge-float">
+        <span class="num">KC</span>
+        <span class="lbl">Traders</span>
+      </div>
+    </div>
+    <div class="about-text">
+      <div class="section-tag">Our Story</div>
+      <h2 class="section-title">Uttar Pradesh की मिट्टी से,<br /><span class="gold">आपकी रसोई तक।</span></h2>
+      <p>KC Traders is a trusted mustard oil manufacturer based in <strong>Jarar,Bah, Uttar Pradesh</strong>. We produce
+        high-quality mustard oil directly at our factory and supply it to retail shops, distributors, and households
+        across the region.</p>
+      <p>Our commitment is simple: <strong>शुद्धता, स्वाद और भरोसा</strong> — Purity, Flavour, and Trust. Every batch is
+        carefully processed to retain the natural goodness of mustard, giving you oil that's genuinely kacchi ghani in
+        spirit.</p>
+      <p>Whether you are a <strong>Kirana store owner</strong>, a <strong>wholesale distributor</strong>, or a
+        <strong>home buyer</strong>, we offer flexible quantities and honest pricing, factory-direct.</p>
+      <div class="about-pillars">
+        <div class="pillar">
+          <div class="pillar-icon">🏭</div>
+          <div>
+            <div class="pillar-title">Factory Direct</div>
+            <div class="pillar-desc">No middlemen, better pricing</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🌿</div>
+          <div>
+            <div class="pillar-title">Pure Quality</div>
+            <div class="pillar-desc">No adulteration, guaranteed</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">📦</div>
+          <div>
+            <div class="pillar-title">Flexible Packing</div>
+            <div class="pillar-desc">1 L to 50 L available</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🤝</div>
+          <div>
+            <div class="pillar-title">Trusted Brand</div>
+            <div class="pillar-desc">Serving local businesses proudly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── PRODUCTS ─── -->
+  <section id="products">
+    <div class="section-tag">Our Range</div>
+    <h2 class="section-title">Our <span class="gold">Products</span></h2>
+    <p class="section-sub">From everyday cooking oil to bulk wholesale packs — we have the right mustard oil for every
+      need.</p>
+
+    <div class="products-grid">
+
+      <!-- Card 1 -->
+      <div class="product-card">
+        <div class="product-badge">Best Seller</div>
+        <div class="product-card-header">
+          <div class="product-icon">🟡</div>
+          <div>
+            <div class="product-name">Kachi Ghani Mustard Oil</div>
+            <div class="product-sub">Cold-Pressed | कच्ची घाणी</div>
+          </div>
+        </div>
+        <div class="product-body">
+          <div class="product-sizes">
+            <span class="size-tag">500 ml</span>
+            <span class="size-tag">1 L</span>
+            <span class="size-tag">5 L</span>
+            <span class="size-tag">15 L</span>
+          </div>
+          <ul class="product-features">
+            <li>Cold-pressed to retain natural nutrients & aroma</li>
+            <li>Rich pungent flavour – perfect for North Indian cooking</li>
+            <li>No chemicals, no bleaching – 100% natural</li>
+            <li>Ideal for pickles, sabzi, tadka & deep-frying</li>
+          </ul>
+          <a href="#contact" class="product-cta">📲 Order / Enquire</a>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="product-card">
+        <div class="product-card-header">
+          <div class="product-icon">🛢</div>
+          <div>
+            <div class="product-name">Double-Filtered Mustard Oil</div>
+            <div class="product-sub">Premium Filtered | Double Refined</div>
+          </div>
+        </div>
+        <div class="product-body">
+          <div class="product-sizes">
+            <span class="size-tag">1 L</span>
+            <span class="size-tag">5 L</span>
+            <span class="size-tag">15 L</span>
+            <span class="size-tag">20 L</span>
+          </div>
+          <ul class="product-features">
+            <li>Twice-filtered for a cleaner, lighter colour</li>
+            <li>Lower smoke point – great for everyday cooking</li>
+            <li>Longer shelf life, suitable for retail packing</li>
+            <li>Popular with Kirana stores & urban consumers</li>
+          </ul>
+          <a href="#contact" class="product-cta">📲 Order / Enquire</a>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="product-card">
+        <div class="product-badge" style="background:var(--gold);">Bulk</div>
+        <div class="product-card-header">
+          <div class="product-icon">🪣</div>
+          <div>
+            <div class="product-name">Bulk / Wholesale Oil</div>
+            <div class="product-sub">For Distributors & Hotels</div>
+          </div>
+        </div>
+        <div class="product-body">
+          <div class="product-sizes">
+            <span class="size-tag">15 L</span>
+            <span class="size-tag">20 L</span>
+            <span class="size-tag">50 L</span>
+            <span class="size-tag">Custom</span>
+          </div>
+          <ul class="product-features">
+            <li>Factory-direct pricing, minimum margin overhead</li>
+            <li>Available in tins, cans & drums</li>
+            <li>Best for distributors, hotels & food businesses</li>
+            <li>Customised labelling available on request</li>
+          </ul>
+          <a href="#contact" class="product-cta">📲 Order / Enquire</a>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="product-card">
+        <div class="product-card-header">
+          <div class="product-icon">🏠</div>
+          <div>
+            <div class="product-name">Home Pack Mustard Oil</div>
+            <div class="product-sub">Ghar ke liye | Family Pack</div>
+          </div>
+        </div>
+        <div class="product-body">
+          <div class="product-sizes">
+            <span class="size-tag">500 ml</span>
+            <span class="size-tag">1 L</span>
+            <span class="size-tag">2 L</span>
+            <span class="size-tag">5 L</span>
+          </div>
+          <ul class="product-features">
+            <li>Sealed, hygienic packaging for home use</li>
+            <li>Affordable pricing, consistent quality</li>
+            <li>Traditional mustard flavour loved by families</li>
+            <li>Doorstep delivery available (local area)</li>
+          </ul>
+          <a href="#contact" class="product-cta">📲 Order / Enquire</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── DEALERS ─── -->
+  <section id="dealers">
+    <div class="dealers-pattern"></div>
+    <div style="position:relative;z-index:2;">
+      <div class="section-tag">For Business Partners</div>
+      <h2 class="section-title">Dukandaar & Distributors —<br /><span style="color:var(--gold-light);">Hamara Bharosa,
+          Aapka Fayda</span></h2>
+      <p class="section-sub">Are you a Kirana shop owner, wholesaler, or distributor? Partner with KC Traders and get
+        factory-direct mustard oil at the best margins in the region.</p>
+
+      <div class="dealers-grid">
+        <div class="dealers-benefits">
+          <div class="benefit-item">
+            <div class="benefit-num">01</div>
+            <div>
+              <div class="benefit-title">Factory-Direct Pricing</div>
+              <div class="benefit-desc">Buy directly from our Jarar factory — no distributor markup, maximum profit
+                margin for your shop.</div>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-num">02</div>
+            <div>
+              <div class="benefit-title">Bulk Quantities Available</div>
+              <div class="benefit-desc">From 15-litre tins to 50-litre drums — we accommodate all order sizes for your
+                business needs.</div>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-num">03</div>
+            <div>
+              <div class="benefit-title">Reliable & Timely Supply</div>
+              <div class="benefit-desc">Consistent quality, consistent quantity — never let your shelves go empty.
+                Regular supply guaranteed.</div>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-num">04</div>
+            <div>
+              <div class="benefit-title">Flexible Payment Options</div>
+              <div class="benefit-desc">We understand small business needs. Talk to us about credit terms and payment
+                flexibility.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dealers-cta-box">
+          <h3>बनिये हमारे Partner!</h3>
+          <p>WhatsApp or call us to discuss your requirements, pricing, and credit terms. हम आपकी दुकान के लिए सही deal
+            निकालेंगे।</p>
+          <a href="https://wa.me/91[9193264397]" class="whatsapp-btn">
+            <span class="whatsapp-icon">💬</span> WhatsApp पर बात करें
+          </a>
+          <a href="tel:+91[9193264397]" class="call-btn">
+            📞 Call Now: [Your Phone / WhatsApp]
+          </a>
+          <p style="font-size:0.78rem;color:rgba(255,255,255,0.4);margin-top:1rem;">Minimum order quantities apply.
+            Contact us for dealer pricing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CONSUMERS ─── -->
+  <section id="consumers">
+    <div class="consumers-inner">
+      <div>
+        <div class="section-tag">For Home Buyers</div>
+        <h2 class="section-title">घर के लिए<br /><span class="gold">Shuddh Sarson Tel</span></h2>
+        <p class="section-sub">Ghar ki rasoi ke liye chahiye shudh aur asli sarson ka tel? Order karein seedha hamare
+          factory se — fresh, pure, and delivered.</p>
+        <div class="consumer-card-list">
+          <div class="consumer-card">
+            <div class="consumer-icon">💯</div>
+            <div>
+              <div class="consumer-title">100% Pure & Unadulterated</div>
+              <div class="consumer-desc">Koi milawat nahi. Hamare factory se seedha aapke ghar tak — trusted by local
+                families for years.</div>
+            </div>
+          </div>
+          <div class="consumer-card">
+            <div class="consumer-icon">🚚</div>
+            <div>
+              <div class="consumer-title">Local Delivery Available</div>
+              <div class="consumer-desc">Jarar aur aas-paas ke ilaakon mein doorstep delivery. Just WhatsApp your order!
+              </div>
+            </div>
+          </div>
+          <div class="consumer-card">
+            <div class="consumer-icon">💰</div>
+            <div>
+              <div class="consumer-title">Affordable & Factory Price</div>
+              <div class="consumer-desc">Since we sell directly, you pay less than market retail prices. Ghar ki
+                zaroorat ke liye best deal.</div>
+            </div>
+          </div>
+          <div class="consumer-card">
+            <div class="consumer-icon">📦</div>
+            <div>
+              <div class="consumer-title">All Sizes Available</div>
+              <div class="consumer-desc">500 ml se lekar 5-litre tak — aapki zaroorat ke hisaab se choose karein.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="consumer-order-box">
+        <span class="emoji">🛒</span>
+        <h3>Order Karna Hai Bahut Aasaan!</h3>
+        <p>No app, no registration. Just follow these simple steps to get pure mustard oil at your doorstep.</p>
+        <ol class="steps">
+          <li><span class="step-num">1</span> WhatsApp ya phone karein: <strong>[Your Phone]</strong></li>
+          <li><span class="step-num">2</span> Apna quantity aur size batayein (e.g., 2 bottles × 1L)</li>
+          <li><span class="step-num">3</span> Apna address share karein</li>
+          <li><span class="step-num">4</span> Payment karo (Cash / UPI) aur order milega!</li>
+        </ol>
+        <a href="https://wa.me/91[9193264397]?text=Namaste! Mujhe sarson tel order karna hai." class="whatsapp-btn">
+          <span class="whatsapp-icon">💬</span> WhatsApp se Order Karein
+        </a>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem;">Delivery charges may apply based on
+          location.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── SITEMAP ─── -->
+  <section id="sitemap">
+    <div class="section-tag">Website Structure</div>
+    <h2 class="section-title">Suggested <span class="gold">Sitemap</span></h2>
+    <p class="section-sub">A page-by-page plan for your full website — when you are ready to build it.</p>
+
+    <div class="sitemap-grid">
+      <div class="sitemap-card">
+        <div class="sitemap-card-header">
+          <div class="sitemap-icon">🏠</div>
+          <div class="sitemap-name">Home</div>
+        </div>
+        <ul class="sitemap-points">
+          <li>Brand headline + hero image of your oil / factory</li>
+          <li>Quick intro & trust signals (years, pure, local)</li>
+          <li>Buttons to Products & Contact</li>
+        </ul>
+      </div>
+      <div class="sitemap-card">
+        <div class="sitemap-card-header">
+          <div class="sitemap-icon">📖</div>
+          <div class="sitemap-name">About Us</div>
+        </div>
+        <ul class="sitemap-points">
+          <li>Story of KC Traders, factory location in Bhind</li>
+          <li>Manufacturing process, quality commitment</li>
+          <li>Owner photo & personal trust message</li>
+        </ul>
+      </div>
+      <div class="sitemap-card">
+        <div class="sitemap-card-header">
+          <div class="sitemap-icon">🛢</div>
+          <div class="sitemap-name">Products</div>
+        </div>
+        <ul class="sitemap-points">
+          <li>All product variants with sizes & prices</li>
+          <li>Product photos & feature highlights</li>
+          <li>Call-to-action on each card for ordering</li>
+        </ul>
+      </div>
+      <div class="sitemap-card">
+        <div class="sitemap-card-header">
+          <div class="sitemap-icon">🏪</div>
+          <div class="sitemap-name">For Dealers</div>
+        </div>
+        <ul class="sitemap-points">
+          <li>Dealer benefits, bulk pricing tiers</li>
+          <li>Packaging options (tins, drums, cans)</li>
+          <li>Partner enquiry form / WhatsApp CTA</li>
+        </ul>
+      </div>
+      <div class="sitemap-card">
+        <div class="sitemap-card-header">
+          <div class="sitemap-icon">👨‍👩‍👧</div>
+          <div class="sitemap-name">For Consumers</div>
+        </div>
+        <ul class="sitemap-points">
+          <li>Home packs, sizes, delivery info</li>
+          <li>Why choose KC Traders over market brands</li>
+          <li>Easy order steps via WhatsApp</li>
+        </ul>
+      </div>
+      <div class="sitemap-card">
+        <div class="sitemap-card-header">
+          <div class="sitemap-icon">📞</div>
+          <div class="sitemap-name">Contact</div>
+        </div>
+        <ul class="sitemap-points">
+          <li>Phone, WhatsApp, email, factory address</li>
+          <li>Google Maps embed for factory location</li>
+          <li>Simple enquiry form for bulk orders</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── GUIDANCE ─── -->
+  <section id="guidance">
+    <div class="section-tag">Website Builder Guide</div>
+    <h2 class="section-title">Website Kaise Banayein —<br /><span class="gold">Beginner's Guide</span></h2>
+    <p class="section-sub">Low-cost, easy options to launch your KC Traders website quickly, even if you are not
+      technical.</p>
+
+    <div class="guidance-grid">
+      <div class="guidance-card">
+        <h4>🌐 Best Platforms</h4>
+        <p>Choose one of these beginner-friendly builders:</p>
+        <div style="margin-top:0.8rem;">
+          <span class="platform-tag">Wix.com</span>
+          <p style="margin-top:0.5rem;">Drag-and-drop, easiest for beginners. Free plan available; ~₹200/mo for custom
+            domain.</p>
+        </div>
+        <div style="margin-top:0.8rem;">
+          <span class="platform-tag">WordPress + Hostinger</span>
+          <p style="margin-top:0.5rem;">Most popular worldwide. Hostinger India plans start at ~₹69/mo. More flexible
+            long-term.</p>
+        </div>
+        <div style="margin-top:0.8rem;">
+          <span class="platform-tag">Instamojo / GoDaddy</span>
+          <p style="margin-top:0.5rem;">Good India-based support, easy UPI payment integration for orders.</p>
+        </div>
+      </div>
+
+      <div class="guidance-card">
+        <h4>📱 Technical Tips</h4>
+        <ul>
+          <li><strong>Mobile-first design:</strong> 80%+ visitors will come from phones. Test on mobile before
+            launching.</li>
+          <li><strong>Compress images:</strong> Use TinyPNG.com to shrink photos — fast loading = better Google ranking.
+          </li>
+          <li><strong>WhatsApp button:</strong> Add a floating WhatsApp button on every page for easy contact.</li>
+          <li><strong>SEO headings:</strong> Your page title should include "sarson tel Bhind" or "mustard oil Madhya
+            Pradesh".</li>
+          <li><strong>Google Business Profile:</strong> List your factory on Google Maps for free — local buyers will
+            find you easily.</li>
+        </ul>
+      </div>
+
+      <div class="guidance-card">
+        <h4>📋 Content Checklist</h4>
+        <p>Before launching, make sure you have:</p>
+        <ul style="margin-top:0.8rem;">
+          <li>✅ Your real phone & WhatsApp number on every page</li>
+          <li>✅ Factory address (for trust and Google Maps)</li>
+          <li>✅ At least 3–5 real photos of your oil / factory / packing</li>
+          <li>✅ Product names, sizes & approximate prices listed</li>
+          <li>✅ A simple privacy policy page (required by Google)</li>
+          <li>✅ FSSAI license number (builds consumer trust)</li>
+          <li>✅ UPI payment QR code or payment link for orders</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CONTACT ─── -->
+  <section id="contact">
+    <div class="section-tag">Get In Touch</div>
+    <h2 class="section-title">Order करें या<br />बात करें — अभी!</h2>
+    <p class="section-sub">Whether you need a single bottle or 50 litres — we're just a call or WhatsApp away.
+      Factory-fresh mustard oil, honest pricing.</p>
+
+    <div class="contact-cards">
+      <div class="contact-card">
+        <span class="icon">📞</span>
+        <h4>Call / WhatsApp</h4>
+        <p>Talk to us directly for orders and enquiries</p>
+        <a href="tel:+919193264397">[Your Phone / WhatsApp]</a>
+      </div>
+      <div class="contact-card">
+        <span class="icon">📧</span>
+        <h4>Email Us</h4>
+        <p>Send your bulk order requirements by email</p>
+        <a href="mailto:info@kctraders.in">[Your Email]</a>
+      </div>
+      <div class="contact-card">
+        <span class="icon">📍</span>
+        <h4>Factory Address</h4>
+        <p>[Your Address],<br />Bhind, Madhya Pradesh</p>
+        <a href="#">Get Directions →</a>
+      </div>
+      <div class="contact-card">
+        <span class="icon">⏰</span>
+        <h4>Working Hours</h4>
+        <p>Monday – Saturday<br />9:00 AM – 6:00 PM</p>
+        <a href="https://wa.me/919193264397">WhatsApp anytime →</a>
+      </div>
+    </div>
+
+    <a href="https://wa.me/91[9193264397]?text=Namaste KC Traders! Mujhe sarson tel ke baare mein jaankari chahiye."
+      class="final-whatsapp">
+      <span>💬</span> WhatsApp पर Order / Enquiry करें
+    </a>
+    <p style="color:rgba(255,255,255,0.35);font-size:0.82rem;margin-top:0.5rem;">Replace [YourPhone] with your actual
+      number before going live.</p>
+  </section>
+
+  <!-- ─── FOOTER ─── -->
+  <footer>
+    <p>© 2025 <span>KC Traders</span> — Pure Mustard Oil | Jarar, Bah (Agra) Uttar Pradesh - 283104 &nbsp;|&nbsp; All
+      rights reserved.</p>
+    <p style="margin-top:0.3rem;font-size:0.75rem;">Replace all placeholder text like [Your Phone], [Your Address],
+      [Your Email] before publishing.</p>
+  </footer>
+
+</body>
+
+</html>

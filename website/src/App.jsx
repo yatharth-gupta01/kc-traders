@@ -10,6 +10,8 @@ import Login from './pages/Login';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import Dashboard from './pages/Dashboard';
+import ProductDetails from './pages/ProductDetails';
+import Users from './pages/Users';
 import LoadingScreen from './components/LoadingScreen';
 import CartSidebar from './components/CartSidebar';
 
@@ -41,10 +43,12 @@ function AppContent() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/shop" element={<Shop />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/login" element={<Login />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/users" element={<Users />} />
             </Routes>
           </main>
 

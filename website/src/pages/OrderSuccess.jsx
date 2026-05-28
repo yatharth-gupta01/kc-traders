@@ -9,11 +9,10 @@ const OrderSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Clear cart upon hitting success page
+  // Clear cart upon hitting success page once on mount
   useEffect(() => {
     clearCart();
-    window.scrollTo(0, 0);
-  }, [clearCart]);
+  }, []);
 
   // Read order ID from checkout state or default
   const orderId = location.state?.orderId || `ORD-KCT-${Math.floor(Math.random() * 90000) + 10000}`;
@@ -89,13 +88,13 @@ const OrderSuccess = () => {
         >
           <Link 
             to="/dashboard"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-mustard-500 hover:bg-mustard-600 text-slate-900 font-bold rounded-xl transition-all shadow-lg hover:shadow-xl interactive"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-mustard-500 hover:bg-mustard-600 text-slate-900 font-bold rounded-xl transition-all shadow-lg hover:shadow-xl interactive text-center"
           >
             <Package className="w-5 h-5" /> View Your Orders
           </Link>
           <Link 
             to="/shop"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-slate-900 hover:bg-slate-800 dark:bg-white/10 dark:hover:bg-white/20 text-white font-bold rounded-xl transition-all shadow-md interactive"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-slate-900 hover:bg-slate-800 dark:bg-white/10 dark:hover:bg-white/20 text-white font-bold rounded-xl transition-all shadow-md interactive text-center"
           >
             <ArrowLeft className="w-5 h-5" /> Continue Shopping
           </Link>

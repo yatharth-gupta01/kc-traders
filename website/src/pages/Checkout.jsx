@@ -8,6 +8,7 @@ import { MapPin, Navigation, Truck, CreditCard, ChevronRight, CheckCircle2, Shie
 const Checkout = () => {
   const { cartItems, getCartTotal, getPriceForUser } = useCart();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Redirect to shop if cart is empty
   useEffect(() => {
@@ -26,8 +27,68 @@ const Checkout = () => {
     paymentMethod: 'cod'
   });
 
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('new');
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [pincodeMessage, setPincodeMessage] = useState('');
+
+  // Fetch Saved Addresses on mount (Flipkart-Style)
+  useEffect(() => {
+    const fetchSavedAddresses = async () => {
+      if (!user || !user.token) return;
+      try {
+        const res = await fetch('http://localhost:5000/api/addresses', {
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSavedAddresses(data);
+          // Auto-select the most recent address by default (like Flipkart!)
+          if (data.length > 0) {
+            setSelectedAddressId(data[0].id);
+            setFormData(prev => ({
+              ...prev,
+              name: data[0].name,
+              phone: data[0].phone,
+              pincode: data[0].pincode,
+              state: data[0].state,
+              city: data[0].city,
+              address: data[0].address
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch saved addresses:", error);
+      }
+    };
+    fetchSavedAddresses();
+  }, [user]);
+
+  const handleSelectSavedAddress = (addr) => {
+    setSelectedAddressId(addr.id);
+    setFormData(prev => ({
+      ...prev,
+      name: addr.name,
+      phone: addr.phone,
+      pincode: addr.pincode,
+      state: addr.state,
+      city: addr.city,
+      address: addr.address
+    }));
+  };
+
+  const handleSelectNewAddressOption = () => {
+    setSelectedAddressId('new');
+    setFormData(prev => ({
+      ...prev,
+      name: '',
+      phone: '',
+      pincode: '',
+      state: '',
+      city: '',
+      address: ''
+    }));
+  };
 
   const subtotal = getCartTotal();
   const deliveryFee = subtotal > 1500 ? 0 : 50; // Free delivery over ₹1500
@@ -88,8 +149,18 @@ const Checkout = () => {
         const data = await response.json();
         
         if (data && data.address) {
-          const fetchedPincode = data.address.postcode || '';
+          // Extract postal code from multiple possible OpenStreetMap fields
+          let fetchedPincode = data.address.postcode || data.address.postal_code || data.address.postalCode || '';
+          fetchedPincode = fetchedPincode.replace(/\D/g, ''); // Extract only numeric digits
           
+          // Fallback: Try to extract a 6-digit Indian PIN code from display_name
+          if (!fetchedPincode) {
+            const displayMatch = data.display_name.match(/\b\d{6}\b/);
+            if (displayMatch) {
+              fetchedPincode = displayMatch[0];
+            }
+          }
+
           setFormData(prev => ({
             ...prev,
             pincode: fetchedPincode,
@@ -98,10 +169,10 @@ const Checkout = () => {
             address: `${data.address.road || ''}, ${data.address.suburb || ''}`.replace(/^, | ,/g, '').trim() || data.display_name
           }));
           
-          if (fetchedPincode.length === 6) {
+          if (fetchedPincode && fetchedPincode.length === 6) {
              fetchPincodeDetails(fetchedPincode);
           } else {
-             setPincodeMessage('Location fetched successfully!');
+             setPincodeMessage('Location found! Please enter Pincode manually.');
           }
         } else {
           setPincodeMessage('Could not resolve readable address from GPS.');
@@ -117,8 +188,6 @@ const Checkout = () => {
       alert('Unable to retrieve your location. Please check browser permissions.');
     }, { timeout: 10000 });
   };
-
-  const { user } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -149,6 +218,27 @@ const Checkout = () => {
         body: JSON.stringify(orderPayload)
       });
       if (res.ok) {
+        // Automatically save the address to their Address Book in the background
+        try {
+          await fetch('http://localhost:5000/api/addresses', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${user.token}`
+            },
+            body: JSON.stringify({
+              name: formData.name,
+              phone: formData.phone,
+              pincode: formData.pincode,
+              state: formData.state,
+              city: formData.city,
+              address: formData.address
+            })
+          });
+        } catch (addrErr) {
+          console.error("Background address save failed:", addrErr);
+        }
+        
         navigate('/order-success', { state: { orderId } });
       } else {
         alert("Server rejected the order. Are you logged in securely?");
@@ -185,6 +275,62 @@ const Checkout = () => {
                   {isFetchingLocation ? 'Locating...' : 'Use Current Location'}
                 </button>
               </div>
+
+              {/* Saved Addresses Section (Flipkart-Style) */}
+              {savedAddresses.length > 0 && (
+                <div className="mb-8 pb-6 border-b border-slate-100 dark:border-white/5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-4">
+                    Select a Saved Address (Flipkart-Style Address Book)
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {savedAddresses.map((addr) => (
+                      <div 
+                        key={addr.id}
+                        onClick={() => handleSelectSavedAddress(addr)}
+                        className={`p-5 rounded-2xl border-2 transition-all cursor-pointer relative flex flex-col justify-between ${
+                          selectedAddressId === addr.id 
+                            ? 'border-mustard-500 bg-mustard-50/50 dark:bg-mustard-900/10 shadow-sm' 
+                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50/50 dark:bg-black/10'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-bold text-slate-900 dark:text-white capitalize">{addr.name}</span>
+                            <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                              selectedAddressId === addr.id ? 'border-mustard-500 bg-mustard-500' : 'border-slate-300 dark:border-white/20'
+                            }`}>
+                              {selectedAddressId === addr.id && <span className="w-1.5 h-1.5 bg-white dark:bg-slate-900 rounded-full" />}
+                            </span>
+                          </div>
+                          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Ph: {addr.phone}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">{addr.address}, {addr.city}, {addr.state} - {addr.pincode}</p>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Use a New Address Option */}
+                    <div 
+                      onClick={handleSelectNewAddressOption}
+                      className={`p-5 rounded-2xl border-2 border-dashed transition-all cursor-pointer flex items-center justify-center ${
+                        selectedAddressId === 'new' 
+                          ? 'border-mustard-500 bg-mustard-50/50 dark:bg-mustard-900/10 shadow-sm' 
+                          : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50/50 dark:bg-black/10'
+                      }`}
+                    >
+                      <div className="text-center">
+                        <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mx-auto mb-2 ${
+                          selectedAddressId === 'new' ? 'border-mustard-500 bg-mustard-500' : 'border-slate-300 dark:border-white/20'
+                        }`}>
+                          {selectedAddressId === 'new' && <span className="w-1.5 h-1.5 bg-white dark:bg-slate-900 rounded-full" />}
+                        </span>
+                        <p className="font-bold text-sm text-slate-900 dark:text-white">Use a New Address</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Fill in the delivery details below.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>

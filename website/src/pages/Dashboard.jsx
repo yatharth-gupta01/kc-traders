@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Package, Truck, Clock, Search, LogOut, CheckCircle, XCircle, Database, Edit3, Save } from 'lucide-react';
 
 const Dashboard = () => {
@@ -9,6 +10,12 @@ const Dashboard = () => {
   const [orders, setOrders] = useState([]);
   const [stock, setStock] = useState([]);
   const [editingStock, setEditingStock] = useState(null); // { name, liters }
+  const [toast, setToast] = useState(null);
+
+  const triggerToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Kick out unauthenticated
   useEffect(() => {
@@ -74,10 +81,14 @@ const Dashboard = () => {
       });
       if (res.ok) {
         fetchOrders(); // Refresh table
-        alert(`Order marked as ${newStatus}`);
+        fetchStock();  // Refresh production stock cards at the top in real-time
+        triggerToast(`Order marked as ${newStatus}`);
+      } else {
+        const errorData = await res.json();
+        triggerToast(errorData.error || `Failed to update status to ${newStatus}.`, "error");
       }
     } catch (e) {
-      alert("Failed to update status.");
+      triggerToast("Failed to update status.", "error");
     }
   };
 
@@ -97,10 +108,10 @@ const Dashboard = () => {
       if (res.ok) {
         setEditingStock(null);
         fetchStock();
-        alert("Stock updated!");
+        triggerToast("Stock updated!");
       }
     } catch (e) {
-      alert("Stock update failed.");
+      triggerToast("Stock update failed.", "error");
     }
   };
 
@@ -121,12 +132,12 @@ const Dashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
           <div>
             <h1 className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white mb-2">
-              Factory <span className="text-gradient capitalize">Dashboard</span>
+              {isAdmin ? "Factory" : "My"} <span className="text-gradient capitalize">{isAdmin ? "Dashboard" : "Orders"}</span>
             </h1>
             <p className="text-slate-600 dark:text-slate-400">
               {isAdmin 
                 ? "Admin Control - Managing Stock, Verification & Global Orders."
-                : "Manage your wholesale/retail orders and track deliveries."}
+                : "Manage your wholesale/retail orders and track delivery status."}
             </p>
           </div>
           
@@ -185,7 +196,7 @@ const Dashboard = () => {
                  <div className="flex justify-between items-center p-4 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-900/30">
                     <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">Orders to Verify</p>
                     <span className="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                      {orders.filter(o => o.status === 'Pending Verification').length}
+                      {orders.filter(o => o.status !== 'Accepted' && o.status !== 'Verified' && o.status !== 'Rejected').length}
                     </span>
                  </div>
                  <div className="flex justify-between items-center p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/30">
@@ -235,15 +246,25 @@ const Dashboard = () => {
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{order.address}</p>
                     </td>
                     <td className="py-4 px-6">
-                       <div className="flex items-center gap-2">
-                         <span className="text-sm font-bold text-mustard-500 bg-mustard-50 dark:bg-mustard-900/20 px-2 py-0.5 rounded-lg border border-mustard-100 dark:border-mustard-800">
-                           {order.items.reduce((sum, i) => sum + i.quantity, 0)} Items
-                         </span>
+                       <div className="flex flex-col gap-3 min-w-[200px]">
+                         {order.items.map((item, idx) => (
+                           <Link to={`/product/${item.id}`} key={idx} className="flex items-center gap-3 bg-white dark:bg-black/20 p-2 rounded-xl border border-slate-100 dark:border-white/5 relative group cursor-pointer hover:border-mustard-500 transition-colors">
+                             <div className="w-10 h-10 bg-slate-50 dark:bg-black/40 rounded-lg flex items-center justify-center border border-slate-100 dark:border-white/5 flex-shrink-0 p-1">
+                               <img src={item.image} alt={item.name} className="h-full w-auto object-contain drop-shadow-sm group-hover:scale-110 transition-transform" />
+                             </div>
+                             <div className="flex flex-col overflow-hidden">
+                               <span className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-mustard-500 transition-colors" title={item.name}>{item.name}</span>
+                               <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                 Qty: <span className="font-bold text-mustard-600 dark:text-mustard-400">{item.quantity}</span> Unit(s)
+                               </span>
+                             </div>
+                           </Link>
+                         ))}
                        </div>
                     </td>
                     <td className="py-4 px-6">
                       <span className={`px-3 py-1 text-[10px] font-bold rounded-full border uppercase tracking-wider ${
-                        order.status === 'Verified' ? 'bg-green-50 text-green-600 border-green-200' :
+                        (order.status === 'Accepted' || order.status === 'Verified') ? 'bg-green-50 text-green-600 border-green-200' :
                         order.status === 'Rejected' ? 'bg-red-50 text-red-600 border-red-200' :
                         'bg-amber-50 text-amber-600 border-amber-200'
                       }`}>
@@ -252,22 +273,26 @@ const Dashboard = () => {
                     </td>
                     {isAdmin && (
                       <td className="py-4 px-6">
-                        <div className="flex gap-2">
-                           <button 
-                             onClick={() => handleUpdateStatus(order.id, 'Verified')}
-                             className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition shadow-sm"
-                             title="Verify Order"
-                           >
-                             <CheckCircle className="w-4 h-4" />
-                           </button>
-                           <button 
-                             onClick={() => handleUpdateStatus(order.id, 'Rejected')}
-                             className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition shadow-sm"
-                             title="Reject Order"
-                           >
-                             <XCircle className="w-4 h-4" />
-                           </button>
-                        </div>
+                        {(order.status !== 'Accepted' && order.status !== 'Verified' && order.status !== 'Rejected') ? (
+                          <div className="flex gap-2">
+                             <button 
+                               onClick={() => handleUpdateStatus(order.id, 'Accepted')}
+                               className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition shadow-sm"
+                               title="Accept Order"
+                             >
+                               <CheckCircle className="w-4 h-4" />
+                             </button>
+                             <button 
+                               onClick={() => handleUpdateStatus(order.id, 'Rejected')}
+                               className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition shadow-sm"
+                               title="Reject Order"
+                             >
+                               <XCircle className="w-4 h-4" />
+                             </button>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Locked</span>
+                        )}
                       </td>
                     )}
                     <td className="py-4 px-6 text-right font-bold text-lg text-slate-900 dark:text-white">
@@ -280,6 +305,25 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Global Animated Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className={`fixed bottom-10 right-10 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl backdrop-blur-md border ${
+              toast.type === 'error' 
+                ? 'bg-red-500/90 text-white border-red-400' 
+                : 'bg-green-500/90 text-white border-green-400'
+            }`}
+          >
+            {toast.type === 'error' ? <XCircle className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
+            <span className="font-bold block drop-shadow-sm">{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

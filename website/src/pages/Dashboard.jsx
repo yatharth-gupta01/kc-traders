@@ -4,6 +4,12 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Package, Truck, Clock, Search, LogOut, CheckCircle, XCircle, Database, Edit3, Save } from 'lucide-react';
 
+const WHOLESALE_RATES = {
+  'Kacchi Ghani': { id: 'kcm-01-bulk', name: 'Kacchi Ghani Mustard Oil', rate: 140 },
+  'Premium Filtered': { id: 'kcm-02-bulk', name: 'Premium Filtered Mustard Oil', rate: 125 },
+  'Yellow Mustard': { id: 'kcm-05-bulk', name: 'Yellow Mustard Oil', rate: 160 }
+};
+
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -12,6 +18,10 @@ const Dashboard = () => {
   const [editingStock, setEditingStock] = useState(null); // { name, liters }
   const [toast, setToast] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [directOilType, setDirectOilType] = useState('Kacchi Ghani');
+  const [directQuantity, setDirectQuantity] = useState('');
+  const [directAddress, setDirectAddress] = useState('');
+  const [directPayment, setDirectPayment] = useState('COD');
 
   const triggerToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -124,9 +134,66 @@ const Dashboard = () => {
     navigate('/');
   };
 
+  const handleDirectPurchase = async (e) => {
+    e.preventDefault();
+    const qty = parseFloat(directQuantity);
+    if (isNaN(qty) || qty <= 15) {
+      triggerToast("Minimum purchase quantity must be greater than 15 L.", "error");
+      return;
+    }
+    if (!directAddress.trim()) {
+      triggerToast("Shipping address is required.", "error");
+      return;
+    }
+
+    const orderId = `KCW-${Math.floor(100000 + Math.random() * 900000)}`;
+    const selectedItem = WHOLESALE_RATES[directOilType];
+
+    const orderData = {
+      id: orderId,
+      address: directAddress,
+      items: [{
+        id: selectedItem.id,
+        name: `${selectedItem.name} (${qty}L Bulk)`,
+        volume: `${qty}L`,
+        price: selectedItem.rate * qty,
+        quantity: 1,
+        image: "/assets/product_oil.png"
+      }],
+      total: qty * selectedItem.rate,
+      paymentMethod: directPayment
+    };
+
+    try {
+      const res = await fetch('http://localhost:5000/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify(orderData)
+      });
+      
+      if (res.ok) {
+        setDirectQuantity('');
+        setDirectAddress('');
+        fetchOrders();
+        triggerToast("Bulk wholesale order placed successfully!");
+      } else {
+        const errorData = await res.json();
+        triggerToast(errorData.error || "Failed to place bulk order.", "error");
+      }
+    } catch (e) {
+      triggerToast("Failed to place bulk order.", "error");
+    }
+  };
+
   if (!user) return null;
 
   const isAdmin = user.role === 'admin';
+
+  const selectedRate = WHOLESALE_RATES[directOilType].rate;
+  const totalCost = directQuantity ? parseFloat(directQuantity) * selectedRate : 0;
 
   const filteredOrders = orders.filter(order => {
     const query = searchQuery.toLowerCase().trim();
@@ -173,6 +240,102 @@ const Dashboard = () => {
             <LogOut className="w-4 h-4" /> Sign Out
           </button>
         </div>
+
+        {/* Shopkeeper Direct Purchase Form */}
+        {user.role === 'shopkeeper' && (
+          <div className="glass-card bg-white dark:bg-black/30 p-8 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm mb-12 max-w-4xl">
+            <div className="flex items-center gap-3 mb-6">
+              <Package className="w-6 h-6 text-mustard-500" />
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Direct Bulk Wholesale Purchase</h2>
+            </div>
+            
+            <form onSubmit={handleDirectPurchase} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2">Select Oil Type</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {Object.keys(WHOLESALE_RATES).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setDirectOilType(type)}
+                        className={`p-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                          directOilType === type
+                            ? 'bg-mustard-500 border-mustard-500 text-white shadow-lg shadow-mustard-500/25'
+                            : 'bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:border-mustard-500'
+                        }`}
+                      >
+                        {type}
+                        <span className="block text-[10px] opacity-75 mt-1 font-medium">₹{WHOLESALE_RATES[type].rate}/L</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2">Quantity (Liters)</label>
+                  <input
+                    type="number"
+                    min="16"
+                    step="any"
+                    placeholder="Enter quantity (> 15 L)"
+                    value={directQuantity}
+                    onChange={(e) => setDirectQuantity(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-mustard-500 text-sm font-bold"
+                    required
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">Must be strictly greater than 15 L</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2">Payment Method</label>
+                  <div className="flex gap-4">
+                    {['COD', 'UPI'].map((method) => (
+                      <label key={method} className="flex items-center gap-2 cursor-pointer text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                        <input
+                          type="radio"
+                          name="payment"
+                          value={method}
+                          checked={directPayment === method}
+                          onChange={(e) => setDirectPayment(e.target.value)}
+                          className="text-mustard-500 focus:ring-mustard-500"
+                        />
+                        {method}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 flex flex-col justify-between">
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2">Shipping Delivery Address</label>
+                  <textarea
+                    placeholder="Enter complete shipping details..."
+                    value={directAddress}
+                    onChange={(e) => setDirectAddress(e.target.value)}
+                    rows="3"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-mustard-500 text-sm"
+                    required
+                  />
+                </div>
+
+                <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5 flex justify-between items-center">
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Estimated Cost</p>
+                    <p className="text-2xl font-black text-slate-900 dark:text-mustard-400">₹{totalCost.toLocaleString()}</p>
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-gradient-to-r from-mustard-600 to-mustard-500 text-white font-bold rounded-xl shadow-lg shadow-mustard-500/25 hover:opacity-90 active:scale-95 transition-all text-sm"
+                  >
+                    Place Wholesale Order
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Action Grid (Only for Admin) */}
         {isAdmin && (

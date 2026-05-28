@@ -125,6 +125,9 @@ const Dashboard = () => {
     navigate('/');
   };
 
+  if (!user) return null;
+
+  const isAdmin = user.role === 'admin';
 
   const filteredOrders = orders.filter(order => {
     const query = searchQuery.toLowerCase().trim();

@@ -11,6 +11,7 @@ const Dashboard = () => {
   const [stock, setStock] = useState([]);
   const [editingStock, setEditingStock] = useState(null); // { name, liters }
   const [toast, setToast] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const triggerToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -35,7 +36,10 @@ const Dashboard = () => {
         const formattedOrders = data.map(o => ({
           id: o.id,
           date: o.created_at,
-          user: { name: o.userName || user.name },
+          user: { 
+            name: o.userName || user.name,
+            email: o.userEmail
+          },
           address: o.address_data,
           items: JSON.parse(o.items_data),
           total: o.total_amount,
@@ -124,6 +128,27 @@ const Dashboard = () => {
 
   const isAdmin = user.role === 'admin';
 
+  const filteredOrders = orders.filter(order => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    
+    const orderIdMatches = order.id.toLowerCase().includes(query);
+    const userNameMatches = order.user.name.toLowerCase().includes(query);
+    const userEmailMatches = (order.user.email || '').toLowerCase().includes(query);
+    const statusMatches = order.status.toLowerCase().includes(query);
+    
+    const orderDate = new Date(order.date);
+    const dateStr = orderDate.toLocaleString().toLowerCase();
+    const dateMatches = dateStr.includes(query);
+    
+    const itemsMatches = order.items.some(item => 
+      item.name.toLowerCase().includes(query) || 
+      (item.id && item.id.toLowerCase().includes(query))
+    );
+    
+    return orderIdMatches || userNameMatches || userEmailMatches || statusMatches || dateMatches || itemsMatches;
+  });
+
   return (
     <div className="min-h-screen pt-32 pb-24 bg-slate-50 dark:bg-earth-dark">
       <div className="container mx-auto px-6 lg:px-12">
@@ -209,22 +234,45 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Orders Table */}
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
-          {isAdmin ? 'Global Order Log & Verification' : 'Your Order History'}
-        </h2>
+        {/* Orders Table Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            {isAdmin ? 'Global Order Log & Verification' : 'Your Order History'}
+          </h2>
+          
+          {orders.length > 0 && (
+            <div className="relative w-full md:w-80">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search ID, name, email, item, date or status..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="block w-full pl-10 pr-4 py-2 text-sm border border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-black/20 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-mustard-500 focus:border-transparent transition-all shadow-sm"
+              />
+            </div>
+          )}
+        </div>
 
         {orders.length === 0 ? (
           <div className="glass-card bg-white dark:bg-black/30 border border-slate-100 dark:border-white/5 rounded-3xl p-12 text-center text-slate-500">
              <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
              <p>No orders recorded.</p>
           </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="glass-card bg-white dark:bg-black/30 border border-slate-100 dark:border-white/5 rounded-3xl p-12 text-center text-slate-500 shadow-sm">
+             <Search className="w-12 h-12 mx-auto mb-4 opacity-20 text-mustard-500" />
+             <p className="font-semibold text-slate-800 dark:text-slate-200">No matching orders found.</p>
+             <p className="text-xs text-slate-400 mt-1">Try refining your search query.</p>
+          </div>
         ) : (
           <div className="glass-card bg-white dark:bg-black/30 border border-slate-100 dark:border-white/5 rounded-3xl overflow-hidden overflow-x-auto shadow-sm">
             <table className="w-full text-left whitespace-nowrap">
               <thead className="bg-slate-50 dark:bg-black/40 border-b border-slate-100 dark:border-white/5 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">
                 <tr>
-                  <th className="py-5 px-6">ID / Date</th>
+                  <th className="py-5 px-6">ID / Date & Time</th>
                   <th className="py-5 px-6">Party Info</th>
                   <th className="py-5 px-6">Qty/Items</th>
                   <th className="py-5 px-6">Status</th>
@@ -233,16 +281,19 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                {orders.map(order => (
+                {filteredOrders.map(order => (
                   <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                     <td className="py-4 px-6">
                       <p className="font-bold text-slate-900 dark:text-white">{order.id}</p>
                       <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1 uppercase">
-                         <Clock className="w-3 h-3" /> {new Date(order.date).toLocaleDateString()}
+                         <Clock className="w-3 h-3" /> {new Date(order.date).toLocaleString()}
                       </p>
                     </td>
                     <td className="py-4 px-6">
                       <p className="font-semibold text-slate-800 dark:text-slate-200">{order.user.name}</p>
+                      {order.user.email && (
+                        <p className="text-xs text-mustard-600 dark:text-mustard-400 font-medium mb-1">{order.user.email}</p>
+                      )}
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{order.address}</p>
                     </td>
                     <td className="py-4 px-6">

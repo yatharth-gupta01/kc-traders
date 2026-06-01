@@ -74,6 +74,19 @@ async function initDB() {
     );
   `);
 
+  // Create Wishlist Table securely
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS wishlist (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      product_id TEXT NOT NULL,
+      variant_id TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(user_id, variant_id)
+    );
+  `);
+
   console.log("Database initialized. Secured schema loaded.");
 
   // For testing, optionally create an admin immediately if none exists

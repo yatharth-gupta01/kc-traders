@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Moon, Sun, Droplet, ShoppingBag, LogIn, LogOut, Store, User, Search } from 'lucide-react';
+import { Menu, X, Moon, Sun, Droplet, ShoppingBag, LogIn, LogOut, Store, User, Search, Heart } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -11,12 +12,14 @@ const Navbar = () => {
   
   const { user, logout } = useAuth();
   const { cartItems, setIsCartOpen } = useCart();
+  const { wishlistItems } = useWishlist();
   
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === '/';
 
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const wishlistItemCount = wishlistItems ? wishlistItems.length : 0;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -101,18 +104,32 @@ const Navbar = () => {
           
           <div className="flex items-center gap-4">
             {user && user.role !== 'admin' && (
-              <button 
-                onClick={() => setIsCartOpen(true)}
-                className="relative p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors interactive"
-                aria-label="Open Cart"
-              >
-                <ShoppingBag className="w-5 h-5 text-slate-700 dark:text-slate-300" />
-                {cartItemCount > 0 && (
-                  <span className="absolute 0 top-0 right-0 transform translate-x-1/4 -translate-y-1/4 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-earth-dark">
-                    {cartItemCount}
-                  </span>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <Link 
+                  to="/wishlist"
+                  className="relative p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors interactive group"
+                  aria-label="Wishlist"
+                >
+                  <Heart className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-red-500 transition-colors" />
+                  {wishlistItemCount > 0 && (
+                    <span className="absolute 0 top-0 right-0 transform translate-x-1/4 -translate-y-1/4 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-earth-dark">
+                      {wishlistItemCount}
+                    </span>
+                  )}
+                </Link>
+                <button 
+                  onClick={() => setIsCartOpen(true)}
+                  className="relative p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors interactive"
+                  aria-label="Open Cart"
+                >
+                  <ShoppingBag className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+                  {cartItemCount > 0 && (
+                    <span className="absolute 0 top-0 right-0 transform translate-x-1/4 -translate-y-1/4 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-earth-dark">
+                      {cartItemCount}
+                    </span>
+                  )}
+                </button>
+              </div>
             )}
 
             {user ? (

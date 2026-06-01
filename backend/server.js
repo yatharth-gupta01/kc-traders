@@ -10,8 +10,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_fallback_key_48372648';
 
-// Middleware for high-level security
-app.use(helmet()); 
+// Middleware for high-level security (configured for local multi-port development)
+app.use(helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false
+})); 
 app.use(cors());
 app.use(express.json()); // Parses strictly JSON payloads
 
@@ -198,15 +201,22 @@ app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
                 
                 if (stockType) {
                     let volumeLiters = 1;
-                    if (item.volume) {
-                        const parsedVolume = parseFloat(item.volume.replace(/[^\d.]/g, ''));
-                        if (!isNaN(parsedVolume)) {
-                            volumeLiters = parsedVolume;
-                        }
-                    } else {
-                        const volumeMatch = item.name.match(/(\d+)\s*L/i);
+                    let volumeStr = item.volume || "";
+                    if (!volumeStr) {
+                        const volumeMatch = item.name.match(/(\d+(?:\.\d+)?)\s*(L|ml)/i);
                         if (volumeMatch) {
-                            volumeLiters = parseFloat(volumeMatch[1]);
+                            volumeStr = volumeMatch[0];
+                        }
+                    }
+
+                    if (volumeStr) {
+                        const parsedVolume = parseFloat(volumeStr.replace(/[^\d.]/g, ''));
+                        if (!isNaN(parsedVolume)) {
+                            if (volumeStr.toLowerCase().includes('ml')) {
+                                volumeLiters = parsedVolume / 1000;
+                            } else {
+                                volumeLiters = parsedVolume;
+                            }
                         }
                     }
 
@@ -338,6 +348,168 @@ app.post('/api/addresses', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error("Save address error:", err);
         res.status(500).json({ error: 'Failed to securely save address.' });
+    }
+});
+
+// ============================================
+// WISHLIST API (Authenticated Users Only)
+// ============================================
+
+app.get('/api/wishlist', authenticateToken, async (req, res) => {
+    try {
+        const wishlist = await db.all(
+            `SELECT * FROM wishlist WHERE user_id = ? ORDER BY created_at DESC`,
+            [req.user.id]
+        );
+        res.json(wishlist);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch wishlist.' });
+    }
+});
+
+app.post('/api/wishlist', authenticateToken, async (req, res) => {
+    const { product_id, variant_id } = req.body;
+    if (!product_id || !variant_id) {
+        return res.status(400).json({ error: 'Product and Variant IDs are required.' });
+    }
+
+    try {
+        await db.run(
+            `INSERT OR IGNORE INTO wishlist (user_id, product_id, variant_id) VALUES (?, ?, ?)`,
+            [req.user.id, product_id, variant_id]
+        );
+        res.status(201).json({ message: 'Added to wishlist.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to add to wishlist.' });
+    }
+});
+
+app.delete('/api/wishlist/:variantId', authenticateToken, async (req, res) => {
+    try {
+        await db.run(
+            `DELETE FROM wishlist WHERE user_id = ? AND variant_id = ?`,
+            [req.user.id, req.params.variantId]
+        );
+        res.json({ message: 'Removed from wishlist.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to remove from wishlist.' });
+    }
+});
+
+// ============================================
+// RAZORPAY PAYMENT API INTEGRATION
+// ============================================
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_5Wq2bK6fKTraders';
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'KCTradersSecretDummyKeyXYZ789';
+
+let razorpayInstance = null;
+try {
+    if (RAZORPAY_KEY_ID && !RAZORPAY_KEY_ID.includes('KTraders')) {
+        const Razorpay = require('razorpay');
+        razorpayInstance = new Razorpay({
+            key_id: RAZORPAY_KEY_ID,
+            key_secret: RAZORPAY_KEY_SECRET
+        });
+        console.log("Secure Razorpay SDK initialized successfully.");
+    } else {
+        console.log("Razorpay running in premium Simulation Mode.");
+    }
+} catch (e) {
+    console.error("Razorpay SDK initialization failed:", e);
+}
+
+// 1. Create a payment order (Secure server-side)
+app.post('/api/payments/order', authenticateToken, async (req, res) => {
+    const { amount } = req.body;
+    
+    if (!amount || isNaN(amount)) {
+        return res.status(400).json({ error: 'Valid payment amount is required.' });
+    }
+
+    const amountInPaise = Math.round(amount * 100); 
+    const receiptId = `rcpt_${Math.floor(Math.random() * 900000) + 100000}`;
+
+    if (!razorpayInstance) {
+        return res.json({
+            isSimulation: true,
+            id: `order_sim_${Math.floor(Math.random() * 9000000) + 1000000}`,
+            amount: amountInPaise,
+            currency: 'INR',
+            key: RAZORPAY_KEY_ID
+        });
+    }
+
+    try {
+        const order = await razorpayInstance.orders.create({
+            amount: amountInPaise,
+            currency: 'INR',
+            receipt: receiptId
+        });
+        
+        res.json({
+            isSimulation: false,
+            id: order.id,
+            amount: order.amount,
+            currency: order.currency,
+            key: RAZORPAY_KEY_ID
+        });
+    } catch (err) {
+        console.error("Razorpay order creation failed:", err);
+        res.status(500).json({ error: 'Payment gateway order creation failed.' });
+    }
+});
+
+// 2. Verify payment signature
+app.post('/api/payments/verify', authenticateToken, async (req, res) => {
+    const { 
+        razorpay_order_id, 
+        razorpay_payment_id, 
+        razorpay_signature, 
+        address, 
+        items, 
+        total,
+        isSimulation 
+    } = req.body;
+
+    try {
+        let isPaymentValid = false;
+
+        if (isSimulation) {
+            isPaymentValid = true;
+            console.log("Verified simulation checkout for order:", razorpay_order_id);
+        } else {
+            const crypto = require('crypto');
+            const hmac = crypto.createHmac('sha256', RAZORPAY_KEY_SECRET);
+            hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+            const generated_signature = hmac.digest('hex');
+
+            if (generated_signature === razorpay_signature) {
+                isPaymentValid = true;
+                console.log("Cryptographic signature matches. Payment is fully verified!");
+            }
+        }
+
+        if (isPaymentValid) {
+            const orderId = `ORD-KCT-${Math.floor(Math.random() * 90000) + 10000}`;
+            const itemsData = JSON.stringify(items);
+            
+            await db.run(
+                `INSERT INTO orders (id, user_id, address_data, items_data, total_amount, payment_method, status) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [orderId, req.user.id, address, itemsData, total, 'online', 'Paid']
+            );
+
+            res.status(201).json({ 
+                success: true, 
+                message: 'Payment verified and order created successfully.', 
+                orderId 
+            });
+        } else {
+            res.status(400).json({ success: false, error: 'Cryptographic validation failed. Threat detected.' });
+        }
+    } catch (err) {
+        console.error("Payment verification failed:", err);
+        res.status(500).json({ error: 'Internal system verification failure.' });
     }
 });
 

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Star, ShieldCheck, ChevronRight, Droplet, CheckCircle, LogIn } from 'lucide-react';
+import { ShoppingBag, Star, ShieldCheck, ChevronRight, Droplet, CheckCircle, LogIn, Box } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { productsData } from '../data/products';
+import Product3DViewer from '../components/Product3DViewer';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -13,7 +14,8 @@ const ProductDetails = () => {
   const isShopkeeper = user?.role === 'shopkeeper';
 
   const [product, setProduct] = useState(null);
-  const [activeImage, setActiveImage] = useState(0);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [activeImage, setActiveImage] = useState(0); // number for image index, or '3D' for 3D viewer
   const [activeTab, setActiveTab] = useState('description');
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -23,6 +25,9 @@ const ProductDetails = () => {
     // Find the product by ID
     const found = productsData.find(p => p.id === id);
     setProduct(found);
+    if (found) {
+       setSelectedVariant(found.variants.find(v => v.size === '1L') || found.variants[0]);
+    }
     window.scrollTo(0, 0);
 
     const fetchStock = async () => {
@@ -40,7 +45,7 @@ const ProductDetails = () => {
   }, [id]);
 
   const isOutOfStock = (() => {
-    if (!product || stockList.length === 0) return false;
+    if (!product || !selectedVariant || stockList.length === 0) return false;
 
     let category = null;
     const nameLower = product.name.toLowerCase();
@@ -57,17 +62,21 @@ const ProductDetails = () => {
     if (!stockRow) return false;
 
     let capacityLiters = 1;
-    if (product.volume) {
-      const parsedVolume = parseFloat(product.volume.replace(/[^\d.]/g, ''));
+    if (selectedVariant.volume) {
+      const parsedVolume = parseFloat(selectedVariant.volume.replace(/[^\d.]/g, ''));
       if (!isNaN(parsedVolume)) {
-        capacityLiters = parsedVolume;
+        if (selectedVariant.volume.includes('ml')) {
+          capacityLiters = parsedVolume / 1000;
+        } else {
+          capacityLiters = parsedVolume;
+        }
       }
     }
 
     return stockRow.available_liters < capacityLiters;
   })();
 
-  if (!product) {
+  if (!product || !selectedVariant) {
     return (
       <div className="min-h-screen flex items-center justify-center dark:bg-earth-dark">
         <div className="animate-pulse flex flex-col items-center">
@@ -78,14 +87,20 @@ const ProductDetails = () => {
     );
   }
 
-  const price = getPriceForUser(product);
+  const price = isShopkeeper ? selectedVariant.wholesalePrice : selectedVariant.retailPrice;
 
   const handleAddToCart = () => {
-    // Since cart adds 1 by default, loop for specific quantity.
-    // In a real expanded app, addToCart would take a quantity param.
-    for(let i=0; i<quantity; i++){
-       addToCart(product);
-    }
+    // Add specific quantity to cart
+    addToCart({
+      id: selectedVariant.id,
+      name: `${product.name} (${selectedVariant.size})`,
+      subtitle: product.subtitle,
+      image: product.image,
+      retailPrice: selectedVariant.retailPrice,
+      wholesalePrice: selectedVariant.wholesalePrice,
+      volume: selectedVariant.volume
+    }, quantity);
+    
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -106,10 +121,19 @@ const ProductDetails = () => {
         {/* Product Hero Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
            
-           {/* Image Gallery */}
-           <div className="flex flex-col md:flex-row gap-4 h-full max-h-[600px]">
+           {/* Image/3D Gallery */}
+           <div className="flex flex-col md:flex-row gap-4 h-[500px] md:h-[600px]">
              {/* Thumbnail Strip */}
              <div className="flex flex-row md:flex-col gap-4 order-2 md:order-1 overflow-x-auto overflow-y-hidden md:overflow-y-auto no-scrollbar pb-2 md:pb-0">
+               {/* 3D Viewer Toggle Button */}
+               <button 
+                  onClick={() => setActiveImage('3D')}
+                  className={`w-20 h-20 flex-shrink-0 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 bg-white dark:bg-black/20 ${activeImage === '3D' ? 'border-mustard-500 text-mustard-500' : 'border-slate-200 dark:border-white/10 opacity-60 hover:opacity-100 text-slate-500 dark:text-slate-400'} transition-all`}
+               >
+                  <Box className="w-6 h-6" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">3D View</span>
+               </button>
+
                {product.thumbnails.map((img, idx) => (
                  <button 
                     key={idx} 
@@ -121,30 +145,49 @@ const ProductDetails = () => {
                ))}
              </div>
              
-             {/* Main Image Stage */}
-             <div className="flex-1 rounded-3xl bg-white dark:bg-black/40 border border-slate-100 dark:border-white/5 order-1 md:order-2 relative overflow-hidden flex items-center justify-center p-8 group">
-                <div className={`absolute inset-0 bg-gradient-to-tr ${product.color} opacity-10 mix-blend-multiply`} />
+             {/* Main Stage (Image or 3D) */}
+             <div className="flex-1 rounded-3xl bg-white dark:bg-black/40 border border-slate-100 dark:border-white/5 order-1 md:order-2 relative overflow-hidden flex items-center justify-center group">
+                <div className={`absolute inset-0 bg-gradient-to-tr ${product.color} opacity-10 mix-blend-multiply z-0`} />
+                
                 <AnimatePresence mode="wait">
-                  <motion.img 
-                    key={activeImage}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.05 }}
-                    transition={{ duration: 0.3 }}
-                    src={product.thumbnails[activeImage]} 
-                    alt={product.name}
-                    className="w-full h-auto max-h-full object-contain relative z-10 drop-shadow-2xl group-hover:scale-105 transition-transform duration-700"
-                  />
+                  {activeImage === '3D' ? (
+                    <motion.div 
+                      key="3d-viewer"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 z-10"
+                    >
+                      <Product3DViewer 
+                        oilColor={
+                          product.name.includes('Filtered') ? '#fcd34d' : 
+                          product.name.includes('Yellow') ? '#fbbf24' : 
+                          '#b45309' // Kacchi Ghani darker color
+                        } 
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.img 
+                      key={activeImage}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 1.05 }}
+                      transition={{ duration: 0.3 }}
+                      src={product.thumbnails[activeImage]} 
+                      alt={product.name}
+                      className="w-full h-auto max-h-[80%] object-contain relative z-10 drop-shadow-2xl group-hover:scale-105 transition-transform duration-700 p-8"
+                    />
+                  )}
                 </AnimatePresence>
                 
                 {/* Labels */}
-                <div className="absolute top-6 left-6 z-20 flex flex-col gap-2">
+                <div className="absolute top-6 left-6 z-20 flex flex-col gap-2 pointer-events-none">
                    {!isOutOfStock ? (
                      <span className="bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 text-xs font-bold px-3 py-1 rounded-full w-max">IN STOCK</span>
                    ) : (
                      <span className="bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 text-xs font-bold px-3 py-1 rounded-full w-max">OUT OF STOCK</span>
                    )}
-                   <span className="bg-slate-900/10 dark:bg-white/10 text-slate-800 dark:text-slate-200 backdrop-blur-md text-xs font-bold px-3 py-1 rounded-full border border-white/20 w-max bg-white/50">{product.volume} Pack</span>
+                   <span className="bg-slate-900/10 dark:bg-white/10 text-slate-800 dark:text-slate-200 backdrop-blur-md text-xs font-bold px-3 py-1 rounded-full border border-white/20 w-max bg-white/50">{selectedVariant.volume} Pack</span>
                 </div>
              </div>
            </div>
@@ -170,12 +213,40 @@ const ProductDetails = () => {
                 </span>
              </div>
 
+             {/* Variant Selector (Premium Pills) */}
+             <div className="mb-6">
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Select Size</p>
+               <div className="flex flex-wrap gap-2">
+                 {product.variants.map(variant => (
+                   <button
+                     key={variant.id}
+                     onClick={() => setSelectedVariant(variant)}
+                     className={`relative px-4 py-2 rounded-xl text-sm font-bold transition-all overflow-hidden ${
+                       selectedVariant.id === variant.id 
+                         ? 'text-slate-900 dark:text-slate-900' 
+                         : 'text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10'
+                     }`}
+                   >
+                     {selectedVariant.id === variant.id && (
+                       <motion.div
+                         layoutId="active-variant-details"
+                         className="absolute inset-0 bg-mustard-400"
+                         initial={false}
+                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                       />
+                     )}
+                     <span className="relative z-10">{variant.size}</span>
+                   </button>
+                 ))}
+               </div>
+             </div>
+
              {/* Price block */}
              <div className="mb-8">
                <p className="text-5xl font-display font-bold text-slate-900 dark:text-white mb-1">
-                 ₹{price}
+                 ₹{price.toLocaleString()}
                </p>
-               {isShopkeeper && <p className="text-sm font-semibold text-slate-500 line-through">Standard MRP: ₹{product.retailPrice}</p>}
+               {isShopkeeper && <p className="text-sm font-semibold text-slate-500 line-through">Standard MRP: ₹{selectedVariant.retailPrice.toLocaleString()}</p>}
                <p className="text-xs text-slate-500 mt-2 font-medium">Inclusive of all factory taxes.</p>
              </div>
 

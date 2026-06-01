@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Truck, CreditCard, ChevronRight, CheckCircle2, ShieldCheck, HelpCircle, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { MapPin, Navigation, Truck, ChevronRight, ShieldCheck, Loader2 } from 'lucide-react';
 
 const Checkout = () => {
   const { cartItems, getCartTotal, getPriceForUser } = useCart();
@@ -32,62 +32,6 @@ const Checkout = () => {
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [pincodeMessage, setPincodeMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // Razorpay Sandbox Simulator State
-  const [showSimulator, setShowSimulator] = useState(false);
-  const [simulatedOrder, setSimulatedOrder] = useState(null);
-  const [selectedSimulatedMethod, setSelectedSimulatedMethod] = useState('gpay');
-  const [simulatorStep, setSimulatorStep] = useState('select'); 
-  const [upiPin, setUpiPin] = useState('');
-  const [processingText, setProcessingText] = useState('Connecting to payment portal...');
-
-  // Dynamic Razorpay Script Loading
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-    return () => {
-      // Clean up script on unmount
-      const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
-      if (existingScript) {
-        document.body.removeChild(existingScript);
-      }
-    };
-  }, []);
-
-  // Handle Simulated Processing flow
-  useEffect(() => {
-    if (simulatorStep !== 'processing') return;
-
-    const texts = [
-      "Connecting to UPI secure gateway...",
-      "Requesting authorization from bank...",
-      "Awaiting user UPI PIN approval...",
-      "Authenticating digital signature...",
-      "Capturing verified payment order..."
-    ];
-
-    let currentIdx = 0;
-    setProcessingText(texts[0]);
-    
-    const interval = setInterval(() => {
-      if (currentIdx < texts.length - 1) {
-        currentIdx++;
-        setProcessingText(texts[currentIdx]);
-      }
-    }, 700);
-
-    const timer = setTimeout(() => {
-      clearInterval(interval);
-      handleSimulatedPaymentSuccess();
-    }, 4000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timer);
-    };
-  }, [simulatorStep]);
 
   // Fetch Saved Addresses on mount (Flipkart-Style)
   useEffect(() => {
@@ -240,7 +184,7 @@ const Checkout = () => {
     }, { timeout: 10000 });
   };
 
-  // Secure checkout handler
+  // Secure checkout handler (Strictly Cash on Delivery)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user || (!user.token && user.role !== 'admin')) {
@@ -254,78 +198,47 @@ const Checkout = () => {
 
     setIsProcessing(true);
 
-    // Cash on Delivery Integration
-    if (formData.paymentMethod === 'cod') {
-      const orderId = `ORD-KCT-${Math.floor(Math.random() * 90000) + 10000}`;
-      const orderPayload = {
-        id: orderId,
-        address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode} (Ph: ${formData.phone})`,
-        items: cartItems,
-        total: grandTotal,
-        paymentMethod: 'cod'
-      };
+    const orderId = `ORD-KCT-${Math.floor(Math.random() * 90000) + 10000}`;
+    const orderPayload = {
+      id: orderId,
+      address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode} (Ph: ${formData.phone})`,
+      items: cartItems,
+      total: grandTotal,
+      paymentMethod: 'cod'
+    };
 
-      try {
-        const res = await fetch('http://localhost:5000/api/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.token}`
-          },
-          body: JSON.stringify(orderPayload)
-        });
-        
-        if (res.ok) {
-          // Save address to book in background
-          try {
-            await fetch('http://localhost:5000/api/addresses', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${user.token}`
-              },
-              body: JSON.stringify({
-                name: formData.name,
-                phone: formData.phone,
-                pincode: formData.pincode,
-                state: formData.state,
-                city: formData.city,
-                address: formData.address
-              })
-            });
-          } catch (e) {}
-
-          navigate('/order-success', { state: { orderId, paymentMethod: 'cod' } });
-        } else {
-          if (res.status === 401 || res.status === 403) {
-            alert("Your login session has expired for security. Please log in again to complete your order.");
-            logout();
-            navigate('/login');
-            setIsProcessing(false);
-            return;
-          }
-          alert("Server rejected your order. Please login securely again.");
-        }
-      } catch (error) {
-        alert("Failed to securely reach the database server.");
-      } finally {
-        setIsProcessing(false);
-      }
-      return;
-    }
-
-    // Online Payments Integration (Razorpay Checkout)
     try {
-      const res = await fetch('http://localhost:5000/api/payments/order', {
+      const res = await fetch('http://localhost:5000/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify({ amount: grandTotal })
+        body: JSON.stringify(orderPayload)
       });
+      
+      if (res.ok) {
+        // Save address to book in background
+        try {
+          await fetch('http://localhost:5000/api/addresses', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${user.token}`
+            },
+            body: JSON.stringify({
+              name: formData.name,
+              phone: formData.phone,
+              pincode: formData.pincode,
+              state: formData.state,
+              city: formData.city,
+              address: formData.address
+            })
+          });
+        } catch (e) {}
 
-      if (!res.ok) {
+        navigate('/order-success', { state: { orderId, paymentMethod: 'cod' } });
+      } else {
         if (res.status === 401 || res.status === 403) {
           alert("Your login session has expired for security. Please log in again to complete your order.");
           logout();
@@ -333,172 +246,10 @@ const Checkout = () => {
           setIsProcessing(false);
           return;
         }
-        const errorText = await res.text();
-        throw new Error(`Server returned ${res.status}: ${errorText || res.statusText}`);
+        alert("Server rejected your order. Please login securely again.");
       }
-
-      const orderData = await res.json();
-      const { id, amount, currency, key, isSimulation } = orderData;
-
-      if (isSimulation) {
-        // Razorpay Simulation Sandbox Mode
-        setSimulatedOrder({ id, amount, currency, key });
-        setSimulatorStep('select');
-        setUpiPin('');
-        setShowSimulator(true);
-        setIsProcessing(false);
-      } else {
-        // Live Razorpay Checkout Integration
-        if (!window.Razorpay) {
-          alert("Razorpay checkout SDK failed to load. Please check your network.");
-          setIsProcessing(false);
-          return;
-        }
-
-        const options = {
-          key: key,
-          amount: amount,
-          currency: currency,
-          name: "KC Traders",
-          description: "Premium Edible Oils",
-          image: "https://images.unsplash.com/photo-1608797178974-15b35a61d121?auto=format&fit=crop&w=128&q=80",
-          order_id: id,
-          handler: async function (response) {
-            setIsProcessing(true);
-            try {
-              const verifyRes = await fetch('http://localhost:5000/api/payments/verify', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${user.token}`
-                },
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode} (Ph: ${formData.phone})`,
-                  items: cartItems,
-                  total: grandTotal,
-                  isSimulation: false
-                })
-              });
-
-              if (verifyRes.ok) {
-                const verifyData = await verifyRes.json();
-                navigate('/order-success', { state: { orderId: verifyData.orderId, paymentMethod: 'online' } });
-              } else {
-                if (verifyRes.status === 401 || verifyRes.status === 403) {
-                  alert("Your login session has expired for security. Please log in again to complete your order.");
-                  logout();
-                  navigate('/login');
-                  setIsProcessing(false);
-                  return;
-                }
-                alert("Cryptographic signature verification failed. Payment was rejected.");
-              }
-            } catch (err) {
-              alert("Error verifying payment signature on server.");
-            } finally {
-              setIsProcessing(false);
-            }
-          },
-          prefill: {
-            name: formData.name,
-            contact: formData.phone,
-            email: user?.email || "customer@example.com"
-          },
-          theme: {
-            color: "#eab308"
-          },
-          config: {
-            display: {
-              blocks: {
-                upi: {
-                  name: "Pay via UPI",
-                  instruments: [
-                    {
-                      method: "upi"
-                    }
-                  ]
-                }
-              },
-              sequence: ["block.upi"],
-              preferences: {
-                show_default_blocks: true
-              }
-            }
-          }
-        };
-
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-        setIsProcessing(false);
-      }
-
-    } catch (err) {
-      console.error("Checkout transaction initialization failed:", err);
-      alert(`Failed to initialize transaction: ${err.message}`);
-      setIsProcessing(false);
-    }
-  };
-
-  // Handle keypad presses on simulated UPI PIN screen
-  const handleKeypadPress = (val) => {
-    if (val === 'del') {
-      setUpiPin(prev => prev.slice(0, -1));
-    } else if (val === 'ok') {
-      if (upiPin.length === 6) {
-        setSimulatorStep('processing');
-      } else {
-        alert("Please enter a 6-digit simulated UPI PIN.");
-      }
-    } else {
-      if (upiPin.length < 6) {
-        const newPin = upiPin + val;
-        setUpiPin(newPin);
-      }
-    }
-  };
-
-  // Simulated Payment Success Handler
-  const handleSimulatedPaymentSuccess = async () => {
-    if (!simulatedOrder) return;
-    setShowSimulator(false);
-    setIsProcessing(true);
-
-    try {
-      const verifyRes = await fetch('http://localhost:5000/api/payments/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
-        },
-        body: JSON.stringify({
-          razorpay_order_id: simulatedOrder.id,
-          razorpay_payment_id: `pay_sim_${Math.floor(Math.random() * 9000000) + 1000000}`,
-          razorpay_signature: 'simulated_signature_xyz_12345',
-          address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode} (Ph: ${formData.phone})`,
-          items: cartItems,
-          total: grandTotal,
-          isSimulation: true
-        })
-      });
-
-      if (verifyRes.ok) {
-        const verifyData = await verifyRes.json();
-        navigate('/order-success', { state: { orderId: verifyData.orderId, paymentMethod: 'online' } });
-      } else {
-        if (verifyRes.status === 401 || verifyRes.status === 403) {
-          alert("Your login session has expired for security. Please log in again to complete your order.");
-          logout();
-          navigate('/login');
-          setIsProcessing(false);
-          return;
-        }
-        alert("Payment simulator verification rejected by server.");
-      }
-    } catch (err) {
-      alert("Error linking simulated payment to database.");
+    } catch (error) {
+      alert("Failed to securely reach the database server.");
     } finally {
       setIsProcessing(false);
     }
@@ -642,37 +393,6 @@ const Checkout = () => {
                 />
               </div>
             </form>
-
-            {/* Payment Method */}
-            <div className="glass-card bg-white dark:bg-black/40 border border-slate-100 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-sm">
-               <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white mb-6">
-                <CreditCard className="text-mustard-500 w-6 h-6" /> Payment Method
-               </h2>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div 
-                    onClick={() => !isProcessing && setFormData(prev => ({ ...prev, paymentMethod: 'cod' }))}
-                    className={`relative flex items-center p-4 border-2 rounded-2xl cursor-pointer transition-all ${formData.paymentMethod === 'cod' ? 'border-mustard-500 bg-mustard-50 dark:bg-mustard-900/20 shadow-sm' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'} ${isProcessing ? 'pointer-events-none opacity-60' : ''}`}
-                  >
-                    <input type="radio" name="paymentMethod" value="cod" disabled={isProcessing} checked={formData.paymentMethod === 'cod'} readOnly className="sr-only" />
-                    <div className="flex-1">
-                      <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2">Cash on Delivery <CheckCircle2 className={`w-4 h-4 ${formData.paymentMethod === 'cod' ? 'text-mustard-500' : 'opacity-0'}`} /></p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Pay with cash upon package arrival.</p>
-                    </div>
-                  </div>
-
-                  <div 
-                    onClick={() => !isProcessing && setFormData(prev => ({ ...prev, paymentMethod: 'online' }))}
-                    className={`relative flex items-center p-4 border-2 rounded-2xl cursor-pointer transition-all ${formData.paymentMethod === 'online' ? 'border-mustard-500 bg-mustard-50 dark:bg-mustard-900/20 shadow-sm' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'} ${isProcessing ? 'pointer-events-none opacity-60' : ''}`}
-                  >
-                    <input type="radio" name="paymentMethod" value="online" disabled={isProcessing} checked={formData.paymentMethod === 'online'} readOnly className="sr-only" />
-                    <div className="flex-1">
-                      <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2">Pay Online (Razorpay) <CheckCircle2 className={`w-4 h-4 ${formData.paymentMethod === 'online' ? 'text-mustard-500' : 'opacity-0'}`} /></p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">UPI (GPay/PhonePe), Credit Cards, Netbanking.</p>
-                    </div>
-                  </div>
-               </div>
-            </div>
-
           </div>
 
           {/* Right Column - Order Summary Widget */}
@@ -723,298 +443,22 @@ const Checkout = () => {
                  {isProcessing ? (
                    <>
                      <Loader2 className="w-5 h-5 animate-spin" />
-                     Securing checkout...
+                     Securing order...
                    </>
                  ) : (
                    <>
-                     Place Order <ChevronRight className="w-5 h-5" />
+                     Place Order (COD) <ChevronRight className="w-5 h-5" />
                    </>
                  )}
                </button>
                <p className="text-center text-xs text-slate-500 mt-4 flex items-center justify-center gap-1">
-                 <ShieldCheck className="w-3 h-3 text-mustard-500" /> Secure Highly Encrypted Gateway.
+                 <ShieldCheck className="w-3 h-3 text-mustard-500" /> Cash on Delivery Order Verification.
                </p>
             </div>
           </div>
           
         </div>
       </div>
-
-      {/* RAZORPAY PREMIUM SANDBOX SIMULATOR MODAL */}
-      <AnimatePresence>
-        {showSimulator && simulatedOrder && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.5 }}
-              className="glass-card bg-slate-950/95 border border-white/10 rounded-3xl w-full max-w-md p-6 md:p-8 shadow-2xl relative text-white selection:bg-mustard-500 selection:text-slate-950"
-            >
-              
-              {/* STEP 1: CHOOSE simulated payment option */}
-              {simulatorStep === 'select' && (
-                <>
-                  {/* Header */}
-                  <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-mustard-500 text-slate-950 font-black px-2.5 py-1 rounded-lg text-[10px] uppercase tracking-widest shadow-[0_0_15px_rgba(234,179,8,0.2)]">
-                        Razorpay
-                      </div>
-                      <span className="text-xs font-semibold text-slate-400 tracking-wider">Secure Sandbox Overlay</span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setShowSimulator(false);
-                        setIsProcessing(false);
-                      }}
-                      className="text-slate-400 hover:text-white transition-colors text-sm p-1 rounded-full hover:bg-white/5"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Paying Details */}
-                  <div className="bg-white/5 border border-white/5 rounded-2xl p-5 mb-6 text-left relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5">
-                       <ShieldCheck className="w-16 h-16" />
-                    </div>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Paying To</p>
-                    <p className="text-lg font-bold text-white tracking-wide">KC Traders (Kacchi Ghani)</p>
-                    <div className="flex justify-between items-end mt-4 pt-3 border-t border-white/5">
-                      <span className="text-xs text-slate-300">Total Amount (Inc. GST)</span>
-                      <span className="text-3xl font-black text-mustard-400 tracking-wide">₹{(simulatedOrder.amount / 100).toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  {/* UPI & Card Options */}
-                  <div className="space-y-4 mb-6">
-                    <p className="text-left text-xs text-slate-400 font-bold uppercase tracking-wider">Choose Simulated Payment Method</p>
-                    
-                    {/* UPI options */}
-                    <div className="grid grid-cols-2 gap-3 text-left">
-                      <div 
-                        onClick={() => setSelectedSimulatedMethod('gpay')}
-                        className={`p-4 border-2 rounded-2xl transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden ${
-                          selectedSimulatedMethod === 'gpay'
-                            ? 'border-mustard-500 bg-mustard-500/10 shadow-[0_0_15px_rgba(234,179,8,0.1)]'
-                            : 'border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/10'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center w-full mb-1">
-                          <p className={`font-bold text-xs ${selectedSimulatedMethod === 'gpay' ? 'text-mustard-400' : 'text-white'}`}>Google Pay</p>
-                          <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                            selectedSimulatedMethod === 'gpay' ? 'border-mustard-500 bg-mustard-500 text-slate-950' : 'border-slate-500'
-                          }`}>
-                            {selectedSimulatedMethod === 'gpay' && <span className="w-1.5 h-1.5 bg-slate-950 rounded-full" />}
-                          </div>
-                        </div>
-                        <span className="text-[9px] text-slate-400">UPI checkout</span>
-                      </div>
-
-                      <div 
-                        onClick={() => setSelectedSimulatedMethod('phonepe')}
-                        className={`p-4 border-2 rounded-2xl transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden ${
-                          selectedSimulatedMethod === 'phonepe'
-                            ? 'border-mustard-500 bg-mustard-500/10 shadow-[0_0_15px_rgba(234,179,8,0.1)]'
-                            : 'border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/10'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center w-full mb-1">
-                          <p className={`font-bold text-xs ${selectedSimulatedMethod === 'phonepe' ? 'text-mustard-400' : 'text-white'}`}>PhonePe</p>
-                          <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                            selectedSimulatedMethod === 'phonepe' ? 'border-mustard-500 bg-mustard-500 text-slate-950' : 'border-slate-500'
-                          }`}>
-                            {selectedSimulatedMethod === 'phonepe' && <span className="w-1.5 h-1.5 bg-slate-950 rounded-full" />}
-                          </div>
-                        </div>
-                        <span className="text-[9px] text-slate-400">UPI checkout</span>
-                      </div>
-                    </div>
-
-                    {/* Card Option */}
-                    <div 
-                      onClick={() => setSelectedSimulatedMethod('card')}
-                      className={`p-4 border-2 rounded-2xl flex items-center gap-4 transition-all cursor-pointer relative overflow-hidden text-left ${
-                        selectedSimulatedMethod === 'card'
-                          ? 'border-mustard-500 bg-mustard-500/10 shadow-[0_0_15px_rgba(234,179,8,0.1)]'
-                          : 'border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/10'
-                      }`}
-                    >
-                      <div className={`p-2 rounded-xl transition-colors ${
-                        selectedSimulatedMethod === 'card' ? 'bg-mustard-500/20 text-mustard-400' : 'bg-white/5 text-slate-400'
-                      }`}>
-                         <CreditCard className="w-5 h-5" />
-                      </div>
-                      <div className="text-left flex-grow">
-                        <p className={`font-semibold text-xs ${selectedSimulatedMethod === 'card' ? 'text-mustard-400' : 'text-white'}`}>Credit / Debit Card</p>
-                        <p className="text-[9px] text-slate-400">Visa, Mastercard, RuPay card simulation</p>
-                      </div>
-                      <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                        selectedSimulatedMethod === 'card' ? 'border-mustard-500 bg-mustard-500 text-slate-950' : 'border-slate-500'
-                      }`}>
-                        {selectedSimulatedMethod === 'card' && <span className="w-1.5 h-1.5 bg-slate-950 rounded-full" />}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bottom Guarantee */}
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500 justify-center mb-6">
-                    <ShieldCheck className="w-4 h-4 text-green-500" />
-                    <span>Simulated Secure transaction. No real money deducted.</span>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowSimulator(false);
-                        setIsProcessing(false);
-                      }}
-                      className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-white font-bold text-sm rounded-xl transition-all border border-white/10 interactive"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (selectedSimulatedMethod === 'card') {
-                          setSimulatorStep('processing');
-                        } else {
-                          setSimulatorStep('upi-pin');
-                        }
-                      }}
-                      className="flex-1 py-3.5 bg-mustard-500 hover:bg-mustard-600 text-slate-950 font-black text-sm rounded-xl transition-all shadow-lg shadow-mustard-500/20 interactive"
-                    >
-                      Authorize Payment
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {/* STEP 2: UPI PIN INPUT GRID */}
-              {simulatorStep === 'upi-pin' && (
-                <div className="flex flex-col items-center">
-                  
-                  {/* Custom Header based on UPI brand */}
-                  <div className="w-full flex items-center justify-between pb-4 border-b border-white/10 mb-6">
-                    <span className="text-xs uppercase font-extrabold tracking-widest text-slate-400">
-                      {selectedSimulatedMethod === 'gpay' ? 'Google Pay UPI Gateway' : 'PhonePe Secure UPI'}
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[9px] text-mustard-400 font-bold uppercase tracking-wider">
-                      Sandbox
-                    </span>
-                  </div>
-
-                  {/* Subtitle Details */}
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Transferring To</p>
-                  <p className="text-lg font-bold text-white mb-2">KC Traders Edible Oils</p>
-                  <p className="text-3xl font-black text-mustard-400 mb-6">₹{(simulatedOrder.amount / 100).toFixed(2)}</p>
-
-                  <div className="w-full bg-white/5 border border-white/5 rounded-2xl p-6 mb-6 text-center">
-                    <p className="text-xs text-slate-300 font-bold uppercase tracking-widest mb-4">
-                      Enter 6-Digit UPI PIN
-                    </p>
-
-                    {/* Circular Dot Indicator */}
-                    <div className="flex justify-center gap-3 mb-6">
-                      {[...Array(6)].map((_, i) => (
-                        <div 
-                          key={`pin-dot-${i}`}
-                          className={`w-3.5 h-3.5 rounded-full transition-all duration-100 ${
-                            i < upiPin.length 
-                              ? 'bg-mustard-500 scale-110 shadow-[0_0_10px_#eab308]' 
-                              : 'border border-white/20 bg-white/5'
-                          }`}
-                        />
-                      ))}
-                    </div>
-
-                    <p className="text-[10px] text-slate-400 mb-2">Use the keypad below to enter any simulated numbers</p>
-                  </div>
-
-                  {/* Customized tactile numeric keyboard */}
-                  <div className="grid grid-cols-3 gap-y-3.5 gap-x-6 w-full max-w-[280px] mb-6">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                      <button
-                        type="button"
-                        key={`keypad-${num}`}
-                        onClick={() => handleKeypadPress(num.toString())}
-                        className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 active:scale-90 transition-all font-bold text-lg text-white flex items-center justify-center mx-auto select-none cursor-pointer"
-                      >
-                        {num}
-                      </button>
-                    ))}
-                    {/* Del Key */}
-                    <button
-                      type="button"
-                      onClick={() => handleKeypadPress('del')}
-                      className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 active:scale-90 transition-all font-bold text-xs text-red-400 flex items-center justify-center mx-auto select-none cursor-pointer"
-                    >
-                      Delete
-                    </button>
-                    {/* Zero */}
-                    <button
-                      type="button"
-                      onClick={() => handleKeypadPress('0')}
-                      className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 active:scale-90 transition-all font-bold text-lg text-white flex items-center justify-center mx-auto select-none cursor-pointer"
-                    >
-                      0
-                    </button>
-                    {/* Submit checkmark */}
-                    <button
-                      type="button"
-                      onClick={() => handleKeypadPress('ok')}
-                      className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-mustard-500/10 border border-mustard-500/30 hover:bg-mustard-500/20 active:scale-90 transition-all font-extrabold text-xs text-mustard-400 flex items-center justify-center mx-auto select-none cursor-pointer"
-                    >
-                      OK
-                    </button>
-                  </div>
-
-                  {/* Cancel PIN Entry */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSimulatorStep('select');
-                      setUpiPin('');
-                    }}
-                    className="text-xs text-slate-400 hover:text-white underline transition-colors"
-                  >
-                    Back to Select Method
-                  </button>
-
-                </div>
-              )}
-
-              {/* STEP 3: DYNAMIC LOADER */}
-              {simulatorStep === 'processing' && (
-                <div className="flex flex-col items-center py-10">
-                  {/* Glowing bank loader */}
-                  <div className="relative w-24 h-24 mb-8">
-                    <div className="absolute inset-0 rounded-full border-4 border-white/5 border-t-mustard-500 animate-spin" />
-                    <div className="absolute inset-2 rounded-full border-4 border-white/5 border-b-mustard-400 animate-spin [animation-duration:1.5s]" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <ShieldCheck className="w-10 h-10 text-mustard-400 animate-pulse" />
-                    </div>
-                  </div>
-
-                  <p className="text-lg font-bold text-white mb-2">Processing Payment</p>
-                  <p className="text-xs text-mustard-400 h-6 font-medium animate-pulse text-center">
-                    {processingText}
-                  </p>
-
-                  <div className="mt-12 text-[10px] text-slate-500 uppercase tracking-widest font-semibold flex items-center gap-1.5 justify-center">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping" />
-                    Secure Sandbox Verification active.
-                  </div>
-                </div>
-              )}
-
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

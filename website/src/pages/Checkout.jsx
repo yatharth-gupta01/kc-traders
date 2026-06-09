@@ -1,3 +1,4 @@
+import { API_URL } from '../config/api';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -38,7 +39,7 @@ const Checkout = () => {
     const fetchSavedAddresses = async () => {
       if (!user || !user.token) return;
       try {
-        const res = await fetch('http://localhost:5000/api/addresses', {
+        const res = await fetch(`${API_URL}/addresses`, {
           headers: { 'Authorization': `Bearer ${user.token}` }
         });
         if (res.ok) {
@@ -184,7 +185,21 @@ const Checkout = () => {
     }, { timeout: 10000 });
   };
 
-  // Secure checkout handler (Strictly Cash on Delivery)
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  // Secure checkout handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user || (!user.token && user.role !== 'admin')) {
@@ -199,59 +214,188 @@ const Checkout = () => {
     setIsProcessing(true);
 
     const orderId = `ORD-KCT-${Math.floor(Math.random() * 90000) + 10000}`;
-    const orderPayload = {
-      id: orderId,
-      address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode} (Ph: ${formData.phone})`,
-      items: cartItems,
-      total: grandTotal,
-      paymentMethod: 'cod'
-    };
+    const addressString = `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode} (Ph: ${formData.phone})`;
 
+    if (formData.paymentMethod === 'cod') {
+      // Standard COD Path
+      const orderPayload = {
+        id: orderId,
+        address: addressString,
+        items: cartItems,
+        total: grandTotal,
+        paymentMethod: 'cod'
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/orders`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.token}`
+          },
+          body: JSON.stringify(orderPayload)
+        });
+        
+        if (res.ok) {
+          await saveAddressToBook();
+          navigate('/order-success', { state: { orderId, paymentMethod: 'cod' } });
+        } else {
+          handleRequestError(res);
+        }
+      } catch (error) {
+        alert("Failed to securely reach the database server.");
+      } finally {
+        setIsProcessing(false);
+      }
+    } else {
+      // Online Payment Path (Razorpay)
+      try {
+        // 1. Create Razorpay order on backend
+        const orderRes = await fetch(`${API_URL}/payments/order`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.token}`
+          },
+          body: JSON.stringify({ amount: grandTotal })
+        });
+
+        if (!orderRes.ok) {
+          throw new Error('Failed to initiate online payment order');
+        }
+
+        const rzpOrder = await orderRes.json();
+
+        // 2. Load Razorpay script
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+          alert("Failed to load payment gateway SDK. Please check your internet connection.");
+          setIsProcessing(false);
+          return;
+        }
+
+        // 3. Open Razorpay checkout with UPI disabled
+        const options = {
+          key: 'rzp_test_SwK3h7FctY3Mlc',
+          amount: rzpOrder.amount,
+          currency: rzpOrder.currency,
+          name: 'K.C. Traders',
+          description: 'Pure Mustard Oil Purchase',
+          order_id: rzpOrder.id,
+          handler: async function (response) {
+            try {
+              setIsProcessing(true);
+              // 4. Verify payment signature on backend
+              const verifyRes = await fetch(`${API_URL}/payments/verify`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${user.token}`
+                },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature
+                })
+              });
+
+              if (verifyRes.ok) {
+                // 5. Save final order to db
+                const orderPayload = {
+                  id: orderId,
+                  address: addressString,
+                  items: cartItems,
+                  total: grandTotal,
+                  paymentMethod: 'online'
+                };
+
+                const finalRes = await fetch(`${API_URL}/orders`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.token}`
+                  },
+                  body: JSON.stringify(orderPayload)
+                });
+
+                if (finalRes.ok) {
+                  await saveAddressToBook();
+                  navigate('/order-success', { state: { orderId, paymentMethod: 'online' } });
+                } else {
+                  alert("Payment verified, but failed to save order details. Please contact support.");
+                }
+              } else {
+                alert("Payment verification failed. Security mismatch.");
+              }
+            } catch (err) {
+              console.error(err);
+              alert("Error occurred during payment verification.");
+            } finally {
+              setIsProcessing(false);
+            }
+          },
+          prefill: {
+            name: formData.name,
+            contact: formData.phone
+          },
+          theme: {
+            color: '#eab308'
+          },
+          method: {
+            upi: false, // Hides/disables UPI payment option
+            card: true,
+            netbanking: true,
+            wallet: true
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessing(false);
+            }
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+
+      } catch (error) {
+        console.error(error);
+        alert(error.message || "Failed to initialize payment gateway.");
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  // Helper to save address
+  const saveAddressToBook = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/orders', {
+      await fetch(`${API_URL}/addresses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify(orderPayload)
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          pincode: formData.pincode,
+          state: formData.state,
+          city: formData.city,
+          address: formData.address
+        })
       });
-      
-      if (res.ok) {
-        // Save address to book in background
-        try {
-          await fetch('http://localhost:5000/api/addresses', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${user.token}`
-            },
-            body: JSON.stringify({
-              name: formData.name,
-              phone: formData.phone,
-              pincode: formData.pincode,
-              state: formData.state,
-              city: formData.city,
-              address: formData.address
-            })
-          });
-        } catch (e) {}
+    } catch (e) {
+      console.error("Failed to auto-save address:", e);
+    }
+  };
 
-        navigate('/order-success', { state: { orderId, paymentMethod: 'cod' } });
-      } else {
-        if (res.status === 401 || res.status === 403) {
-          alert("Your login session has expired for security. Please log in again to complete your order.");
-          logout();
-          navigate('/login');
-          setIsProcessing(false);
-          return;
-        }
-        alert("Server rejected your order. Please login securely again.");
-      }
-    } catch (error) {
-      alert("Failed to securely reach the database server.");
-    } finally {
-      setIsProcessing(false);
+  // Helper to handle request error
+  const handleRequestError = (res) => {
+    if (res.status === 401 || res.status === 403) {
+      alert("Your login session has expired for security. Please log in again to complete your order.");
+      logout();
+      navigate('/login');
+    } else {
+      alert("Server rejected your order. Please login securely again.");
     }
   };
 
@@ -392,6 +536,50 @@ const Checkout = () => {
                   placeholder="Enter exact delivery instructions" 
                 />
               </div>
+
+              {/* Payment Method Selector */}
+              <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 animate-fade-in">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 font-bold">Choose Payment Method</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div 
+                    onClick={() => !isProcessing && setFormData(prev => ({ ...prev, paymentMethod: 'cod' }))}
+                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                      formData.paymentMethod === 'cod' 
+                        ? 'border-mustard-500 bg-mustard-50/50 dark:bg-mustard-900/10 shadow-sm' 
+                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50/50 dark:bg-black/10'
+                    } ${isProcessing ? 'pointer-events-none opacity-60' : ''}`}
+                  >
+                    <div>
+                      <p className="font-bold text-sm text-slate-900 dark:text-white">Cash on Delivery (COD)</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Pay with cash upon package delivery</p>
+                    </div>
+                    <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      formData.paymentMethod === 'cod' ? 'border-mustard-500 bg-mustard-500' : 'border-slate-300 dark:border-white/20'
+                    }`}>
+                      {formData.paymentMethod === 'cod' && <span className="w-1.5 h-1.5 bg-white dark:bg-slate-900 rounded-full" />}
+                    </span>
+                  </div>
+
+                  <div 
+                    onClick={() => !isProcessing && setFormData(prev => ({ ...prev, paymentMethod: 'online' }))}
+                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                      formData.paymentMethod === 'online' 
+                        ? 'border-mustard-500 bg-mustard-50/50 dark:bg-mustard-900/10 shadow-sm' 
+                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50/50 dark:bg-black/10'
+                    } ${isProcessing ? 'pointer-events-none opacity-60' : ''}`}
+                  >
+                    <div>
+                      <p className="font-bold text-sm text-slate-900 dark:text-white">Online Payment</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Cards, Netbanking, Wallets (No UPI)</p>
+                    </div>
+                    <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      formData.paymentMethod === 'online' ? 'border-mustard-500 bg-mustard-500' : 'border-slate-300 dark:border-white/20'
+                    }`}>
+                      {formData.paymentMethod === 'online' && <span className="w-1.5 h-1.5 bg-white dark:bg-slate-900 rounded-full" />}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </form>
           </div>
 
@@ -435,25 +623,25 @@ const Checkout = () => {
                </div>
 
                <button 
-                 type="submit" 
-                 form="checkoutForm"
-                 disabled={isProcessing}
-                 className="w-full py-4 bg-mustard-500 hover:bg-mustard-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-slate-900 disabled:text-slate-500 font-bold text-lg rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 interactive"
-               >
-                 {isProcessing ? (
-                   <>
-                     <Loader2 className="w-5 h-5 animate-spin" />
-                     Securing order...
-                   </>
-                 ) : (
-                   <>
-                     Place Order (COD) <ChevronRight className="w-5 h-5" />
-                   </>
-                 )}
-               </button>
-               <p className="text-center text-xs text-slate-500 mt-4 flex items-center justify-center gap-1">
-                 <ShieldCheck className="w-3 h-3 text-mustard-500" /> Cash on Delivery Order Verification.
-               </p>
+                  type="submit" 
+                  form="checkoutForm"
+                  disabled={isProcessing}
+                  className="w-full py-4 bg-mustard-500 hover:bg-mustard-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-slate-900 disabled:text-slate-500 font-bold text-lg rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 interactive"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Securing order...
+                    </>
+                  ) : (
+                    <>
+                      {formData.paymentMethod === 'cod' ? 'Place Order (COD)' : 'Pay & Place Order'} <ChevronRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+                <p className="text-center text-xs text-slate-500 mt-4 flex items-center justify-center gap-1">
+                  <ShieldCheck className="w-3 h-3 text-mustard-500" /> {formData.paymentMethod === 'cod' ? 'Cash on Delivery Order Verification.' : 'Secure Online Payment (No UPI).'}
+                </p>
             </div>
           </div>
           

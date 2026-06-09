@@ -42,6 +42,7 @@ const Navbar = () => {
         )
     ),
     { name: 'Shop Products', href: '/shop' },
+    { name: 'Recipes & Blog', href: '/recipes' },
   ];
 
   const handleLogout = () => {

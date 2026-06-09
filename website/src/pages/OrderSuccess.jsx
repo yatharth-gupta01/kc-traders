@@ -1,3 +1,4 @@
+import { API_URL } from '../config/api';
 import { useEffect, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -30,7 +31,7 @@ const OrderSuccess = () => {
         return;
       }
       try {
-        const res = await fetch('http://localhost:5000/api/orders', {
+        const res = await fetch(`${API_URL}/orders`, {
           headers: { 'Authorization': `Bearer ${user.token}` }
         });
         if (res.ok) {

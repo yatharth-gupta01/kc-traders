@@ -1,3 +1,4 @@
+import { API_URL } from '../config/api';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck } from 'lucide-react';
@@ -9,7 +10,7 @@ const Products = () => {
   useEffect(() => {
     const fetchStock = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/stock');
+        const res = await fetch(`${API_URL}/stock`);
         if (res.ok) {
           const data = await res.json();
           setStockList(data);

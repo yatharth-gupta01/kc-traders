@@ -1,3 +1,4 @@
+import { API_URL } from '../config/api';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,7 +33,7 @@ const ProductDetails = () => {
 
     const fetchStock = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/stock');
+        const res = await fetch(`${API_URL}/stock`);
         if (res.ok) {
           const data = await res.json();
           setStockList(data);

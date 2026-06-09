@@ -1,9 +1,11 @@
+import { API_URL } from '../config/api';
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Package, Truck, Clock, Search, LogOut, CheckCircle, XCircle, 
   Database, Edit3, Save, TrendingUp, AlertTriangle, Activity,
-  LayoutDashboard, PieChart as PieChartIcon, ArrowRight
+  LayoutDashboard, PieChart as PieChartIcon, ArrowRight,
+  Users, Mail, Store, User
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -21,6 +23,9 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
   const [editingStock, setEditingStock] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDateFilter, setActiveDateFilter] = useState('all');
+  const [usersList, setUsersList] = useState([]);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
 
   const [selectedDayObj, setSelectedDayObj] = useState(new Date());
   const [selectedMonthObj, setSelectedMonthObj] = useState(new Date());
@@ -110,7 +115,7 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
 
   const handleUpdateStock = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/stock', {
+      const res = await fetch(`${API_URL}/stock`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,12 +135,39 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch(`${API_URL}/users`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUsersList(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch users");
+    }
+  };
+
+  React.useEffect(() => {
+    if (activeTab === 'customers' && usersList.length === 0) {
+      fetchUsers();
+    }
+  }, [activeTab]);
+
   const filteredOrders = orders.filter(order => {
     const query = searchQuery.toLowerCase().trim();
-    const matchesSearch = !query || 
-           order.id.toLowerCase().includes(query) || 
-           order.user.name.toLowerCase().includes(query) || 
-           order.status.toLowerCase().includes(query);
+    
+    let matchesSearch = true;
+    if (query) {
+      if (query === 'pending') {
+        matchesSearch = order.status !== 'Accepted' && order.status !== 'Verified' && order.status !== 'Rejected';
+      } else {
+        matchesSearch = order.id.toLowerCase().includes(query) || 
+               order.user.name.toLowerCase().includes(query) || 
+               order.status.toLowerCase().includes(query);
+      }
+    }
            
     if (!matchesSearch) return false;
 
@@ -248,7 +280,14 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
           <p className="text-4xl font-display font-black text-white">₹{yearlyRevenue.toLocaleString()}</p>
         </div>
 
-        <div className="glass-card bg-white/5 border border-white/10 rounded-3xl p-6 relative overflow-hidden group">
+        <div 
+          className="glass-card bg-white/5 border border-white/10 rounded-3xl p-6 relative overflow-hidden group cursor-pointer hover:border-amber-500/30"
+          onClick={() => {
+            setSearchQuery('pending');
+            setActiveDateFilter('all');
+            setActiveTab('dispatch');
+          }}
+        >
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150" />
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Pending Orders</h3>
@@ -507,6 +546,94 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
     </motion.div>
   );
 
+  const renderCustomers = () => {
+    const filteredUsers = usersList.filter(u => {
+      const matchesSearch = 
+        u.name.toLowerCase().includes(userSearchTerm.toLowerCase()) || 
+        u.email.toLowerCase().includes(userSearchTerm.toLowerCase());
+      const matchesRole = userRoleFilter === 'all' || u.role === userRoleFilter;
+      return matchesSearch && matchesRole;
+    });
+
+    return (
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search customers..."
+              value={userSearchTerm}
+              onChange={(e) => setUserSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-mustard-500 focus:ring-1 focus:ring-mustard-500 transition-all outline-none"
+            />
+          </div>
+          <div className="flex gap-2 w-full md:w-auto overflow-x-auto no-scrollbar">
+            {['all', 'shopkeeper', 'customer'].map((role) => (
+              <button
+                key={role}
+                onClick={() => setUserRoleFilter(role)}
+                className={`px-5 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all whitespace-nowrap ${
+                  userRoleFilter === role 
+                    ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' 
+                    : 'bg-white/5 hover:bg-white/10 text-slate-400'
+                }`}
+              >
+                {role === 'all' ? 'All Roles' : role + 's'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="glass-card bg-white/5 border border-white/10 rounded-3xl overflow-hidden overflow-x-auto">
+          <table className="w-full text-left whitespace-nowrap">
+            <thead className="bg-black/40 border-b border-white/5 text-xs uppercase tracking-wider text-slate-400 font-bold">
+              <tr>
+                <th className="py-6 px-8">User Details</th>
+                <th className="py-6 px-8">Email</th>
+                <th className="py-6 px-8">Registration</th>
+                <th className="py-6 px-8 text-right">Role</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {filteredUsers.map((item) => (
+                <tr key={item.id} className="hover:bg-white/5 transition-colors group">
+                  <td className="py-5 px-8">
+                    <p className="font-bold text-white capitalize">{item.name}</p>
+                    <p className="text-xs text-slate-500 mt-1 font-mono">ID: {item.id}</p>
+                  </td>
+                  <td className="py-5 px-8 text-slate-300">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-mustard-500" /> {item.email}
+                    </div>
+                  </td>
+                  <td className="py-5 px-8 text-slate-400 text-sm">
+                    {new Date(item.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="py-5 px-8 text-right">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                      item.role === 'shopkeeper'
+                        ? 'bg-mustard-500/10 text-mustard-400 border-mustard-500/30'
+                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    }`}>
+                      {item.role === 'shopkeeper' ? <Store className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                      {item.role}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="py-12 text-center text-slate-500 font-medium">No users found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
     <div className="min-h-screen pt-28 pb-24 bg-[#0a0500] selection:bg-mustard-500/30">
       <div className="container mx-auto px-6 lg:px-12 relative z-10">
@@ -536,6 +663,9 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
           <button onClick={() => setActiveTab('dispatch')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'dispatch' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
             <Truck className="w-4 h-4" /> Dispatch Orders
           </button>
+          <button onClick={() => setActiveTab('customers')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'customers' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+            <Users className="w-4 h-4" /> Customers
+          </button>
         </div>
 
         {/* Content Area */}
@@ -543,6 +673,7 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
           {activeTab === 'overview' && <motion.div key="overview">{renderOverview()}</motion.div>}
           {activeTab === 'stock' && <motion.div key="stock">{renderStock()}</motion.div>}
           {activeTab === 'dispatch' && <motion.div key="dispatch">{renderDispatch()}</motion.div>}
+          {activeTab === 'customers' && <motion.div key="customers">{renderCustomers()}</motion.div>}
         </AnimatePresence>
 
       </div>

@@ -5,8 +5,16 @@ const helmet = require('helmet');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { initDB } = require('./database');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 
 const app = express();
+
+// Initialize Razorpay Client
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID || '',
+    key_secret: process.env.RAZORPAY_KEY_SECRET || ''
+});
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_fallback_key_48372648';
 
@@ -58,13 +66,13 @@ app.post('/api/auth/register', async (req, res) => {
         const safeRole = (role === 'shopkeeper') ? 'shopkeeper' : 'customer';
 
         // Parameterized Query absolutely blocks SQL injections
-        await db.run(
-            `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`,
+        await db.query(
+            `INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)`,
             [name, email, hashedPassword, safeRole]
         );
         res.status(201).json({ message: 'User registered successfully securely.' });
     } catch (err) {
-        if (err.message.includes('UNIQUE')) {
+        if (err.message && err.message.includes('UNIQUE')) {
             return res.status(400).json({ error: 'Email already highly protected/used.' });
         }
         res.status(500).json({ error: 'Internal server error.' });
@@ -77,7 +85,8 @@ app.post('/api/auth/login', async (req, res) => {
     
     try {
         // Parameterized Query 
-        const user = await db.get(`SELECT * FROM users WHERE email = ?`, [email]);
+        const userRes = await db.query(`SELECT * FROM users WHERE email = $1`, [email]);
+        const user = userRes.rows[0];
         
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials.' });
@@ -114,9 +123,9 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
         // Prepare items as secure string
         const itemsData = JSON.stringify(items);
         
-        await db.run(
+        await db.query(
             `INSERT INTO orders (id, user_id, address_data, items_data, total_amount, payment_method) 
-             VALUES (?, ?, ?, ?, ?, ?)`,
+             VALUES ($1, $2, $3, $4, $5, $6)`,
             [id, req.user.id, address, itemsData, total, paymentMethod]
         );
         
@@ -133,19 +142,21 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
         let orders;
         if (req.user.role === 'admin') {
             // Admin sees all orders joined with user emails
-            orders = await db.all(`
-                SELECT o.*, u.name as userName, u.email as userEmail 
+            const ordersRes = await db.query(`
+                SELECT o.*, u.name as "userName", u.email as "userEmail" 
                 FROM orders o 
                 JOIN users u ON o.user_id = u.id 
                 ORDER BY o.created_at DESC
             `);
+            orders = ordersRes.rows;
         } else {
             // Secure restriction: Users can strictly only pull their own data.
-            orders = await db.all(`
+            const ordersRes = await db.query(`
                 SELECT * FROM orders 
-                WHERE user_id = ? 
+                WHERE user_id = $1 
                 ORDER BY created_at DESC
             `, [req.user.id]);
+            orders = ordersRes.rows;
         }
         
         res.json(orders);
@@ -162,7 +173,8 @@ app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
     
     const { status } = req.body;
     try {
-        const order = await db.get(`SELECT status, items_data FROM orders WHERE id = ?`, [req.params.id]);
+        const orderRes = await db.query(`SELECT status, items_data FROM orders WHERE id = $1`, [req.params.id]);
+        const order = orderRes.rows[0];
         if (!order) {
             return res.status(404).json({ error: 'Order not found.' });
         }
@@ -172,7 +184,8 @@ app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
             const items = JSON.parse(order.items_data);
             
             // Fetch all available daily production categories dynamically from the database
-            const stockRows = await db.all(`SELECT product_name FROM stock`);
+            const stockRowsRes = await db.query(`SELECT product_name FROM stock`);
+            const stockRows = stockRowsRes.rows;
             
             // 1. Calculate total required liters for each stock type in this order
             const requiredStock = {};
@@ -227,7 +240,8 @@ app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
 
             // 2. Validate stock levels in database prior to accepting
             for (const [stockType, requiredLiters] of Object.entries(requiredStock)) {
-                const stockRow = await db.get(`SELECT available_liters FROM stock WHERE product_name = ?`, [stockType]);
+                const stockRowRes = await db.query(`SELECT available_liters FROM stock WHERE product_name = $1`, [stockType]);
+                const stockRow = stockRowRes.rows[0];
                 const available = stockRow ? stockRow.available_liters : 0;
                 
                 if (available < requiredLiters) {
@@ -239,16 +253,16 @@ app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
 
             // 3. Deduct stock securely
             for (const [stockType, deductionLiters] of Object.entries(requiredStock)) {
-                await db.run(
+                await db.query(
                     `UPDATE stock 
-                     SET available_liters = available_liters - ?, last_updated = CURRENT_TIMESTAMP 
-                     WHERE product_name = ?`,
+                     SET available_liters = available_liters - $1, last_updated = CURRENT_TIMESTAMP 
+                     WHERE product_name = $2`,
                     [deductionLiters, stockType]
                 );
             }
         }
 
-        await db.run(`UPDATE orders SET status = ? WHERE id = ?`, [status, req.params.id]);
+        await db.query(`UPDATE orders SET status = $1 WHERE id = $2`, [status, req.params.id]);
         res.json({ message: `Order marked as ${status} successfully and stock deducted accordingly.` });
     } catch (err) {
         console.error("Order verification error:", err);
@@ -262,7 +276,8 @@ app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
 
 app.get('/api/stock', async (req, res) => {
     try {
-        const stock = await db.all(`SELECT * FROM stock`);
+        const stockRes = await db.query(`SELECT * FROM stock`);
+        const stock = stockRes.rows;
         res.json(stock);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch stock.' });
@@ -276,8 +291,8 @@ app.post('/api/stock', authenticateToken, async (req, res) => {
 
     const { product_name, liters } = req.body;
     try {
-        await db.run(
-            `UPDATE stock SET available_liters = ?, last_updated = CURRENT_TIMESTAMP WHERE product_name = ?`,
+        await db.query(
+            `UPDATE stock SET available_liters = $1, last_updated = CURRENT_TIMESTAMP WHERE product_name = $2`,
             [liters, product_name]
         );
         res.json({ message: 'Stock updated successfully.' });
@@ -294,7 +309,8 @@ app.get('/api/users', authenticateToken, async (req, res) => {
         return res.status(403).json({ error: 'Unauthorized. Factory Admin only.' });
     }
     try {
-        const users = await db.all(`SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC`);
+        const usersRes = await db.query(`SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC`);
+        const users = usersRes.rows;
         res.json(users);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch users.' });
@@ -308,10 +324,11 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 // Fetch saved addresses
 app.get('/api/addresses', authenticateToken, async (req, res) => {
     try {
-        const addresses = await db.all(
-            `SELECT * FROM addresses WHERE user_id = ? ORDER BY created_at DESC`,
+        const addressesRes = await db.query(
+            `SELECT * FROM addresses WHERE user_id = $1 ORDER BY created_at DESC`,
             [req.user.id]
         );
+        const addresses = addressesRes.rows;
         res.json(addresses);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch saved addresses.' });
@@ -328,23 +345,24 @@ app.post('/api/addresses', authenticateToken, async (req, res) => {
 
     try {
         // Prevent duplicate addresses for the same user
-        const existing = await db.get(
+        const existingRes = await db.query(
             `SELECT id FROM addresses 
-             WHERE user_id = ? AND name = ? AND phone = ? AND pincode = ? AND state = ? AND city = ? AND address = ?`,
+             WHERE user_id = $1 AND name = $2 AND phone = $3 AND pincode = $4 AND state = $5 AND city = $6 AND address = $7`,
             [req.user.id, name, phone, pincode, state, city, address]
         );
+        const existing = existingRes.rows[0];
 
         if (existing) {
             return res.json({ message: 'Address already exists in Address Book.', addressId: existing.id });
         }
 
-        const result = await db.run(
+        const result = await db.query(
             `INSERT INTO addresses (user_id, name, phone, pincode, state, city, address) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
             [req.user.id, name, phone, pincode, state, city, address]
         );
 
-        res.status(201).json({ message: 'Address saved successfully.', addressId: result.lastID });
+        res.status(201).json({ message: 'Address saved successfully.', addressId: result.rows[0].id });
     } catch (err) {
         console.error("Save address error:", err);
         res.status(500).json({ error: 'Failed to securely save address.' });
@@ -357,10 +375,11 @@ app.post('/api/addresses', authenticateToken, async (req, res) => {
 
 app.get('/api/wishlist', authenticateToken, async (req, res) => {
     try {
-        const wishlist = await db.all(
-            `SELECT * FROM wishlist WHERE user_id = ? ORDER BY created_at DESC`,
+        const wishlistRes = await db.query(
+            `SELECT * FROM wishlist WHERE user_id = $1 ORDER BY created_at DESC`,
             [req.user.id]
         );
+        const wishlist = wishlistRes.rows;
         res.json(wishlist);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch wishlist.' });
@@ -374,8 +393,8 @@ app.post('/api/wishlist', authenticateToken, async (req, res) => {
     }
 
     try {
-        await db.run(
-            `INSERT OR IGNORE INTO wishlist (user_id, product_id, variant_id) VALUES (?, ?, ?)`,
+        await db.query(
+            `INSERT INTO wishlist (user_id, product_id, variant_id) VALUES ($1, $2, $3) ON CONFLICT (user_id, variant_id) DO NOTHING`,
             [req.user.id, product_id, variant_id]
         );
         res.status(201).json({ message: 'Added to wishlist.' });
@@ -386,8 +405,8 @@ app.post('/api/wishlist', authenticateToken, async (req, res) => {
 
 app.delete('/api/wishlist/:variantId', authenticateToken, async (req, res) => {
     try {
-        await db.run(
-            `DELETE FROM wishlist WHERE user_id = ? AND variant_id = ?`,
+        await db.query(
+            `DELETE FROM wishlist WHERE user_id = $1 AND variant_id = $2`,
             [req.user.id, req.params.variantId]
         );
         res.json({ message: 'Removed from wishlist.' });
@@ -396,9 +415,65 @@ app.delete('/api/wishlist/:variantId', authenticateToken, async (req, res) => {
     }
 });
 
+// ============================================
+// RAZORPAY INTEGRATION ENDPOINTS
+// ============================================
+
+// Create a Razorpay Order
+app.post('/api/payments/order', authenticateToken, async (req, res) => {
+    const { amount } = req.body;
+    if (!amount) {
+        return res.status(400).json({ error: 'Amount is required.' });
+    }
+
+    try {
+        const options = {
+            amount: Math.round(amount * 100), // convert to paise
+            currency: 'INR',
+            receipt: `rcpt_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+        };
+
+        const rzpOrder = await razorpay.orders.create(options);
+        res.json({
+            id: rzpOrder.id,
+            amount: rzpOrder.amount,
+            currency: rzpOrder.currency
+        });
+    } catch (err) {
+        console.error("Razorpay Order Creation Error:", err);
+        res.status(500).json({ error: 'Failed to create payment order.' });
+    }
+});
+
+// Verify Payment Signature
+app.post('/api/payments/verify', authenticateToken, async (req, res) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        return res.status(400).json({ error: 'All payment verification fields are required.' });
+    }
+
+    try {
+        const text = razorpay_order_id + "|" + razorpay_payment_id;
+        const generated_signature = crypto
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
+            .update(text)
+            .digest('hex');
+
+        if (generated_signature === razorpay_signature) {
+            res.json({ success: true, message: 'Payment signature verified successfully.' });
+        } else {
+            res.status(400).json({ error: 'Signature verification failed. Invalid payment details.' });
+        }
+    } catch (err) {
+        console.error("Signature Verification Error:", err);
+        res.status(500).json({ error: 'Internal server error during verification.' });
+    }
+});
+
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`Backend vault locked. Server running on security port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Backend vault locked. Server running on security port ${PORT} across all network interfaces.`);
 });
 

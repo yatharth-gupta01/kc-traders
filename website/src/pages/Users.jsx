@@ -1,3 +1,4 @@
+import { API_URL } from '../config/api';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -25,7 +26,7 @@ const Users = () => {
       if (!user || !user.token) return;
       try {
         setIsLoading(true);
-        const res = await fetch('http://localhost:5000/api/users', {
+        const res = await fetch(`${API_URL}/users`, {
           headers: { 'Authorization': `Bearer ${user.token}` }
         });
         if (res.ok) {

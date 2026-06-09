@@ -1,3 +1,4 @@
+import { API_URL } from '../config/api';
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
@@ -17,32 +18,42 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await fetch('http://localhost:5000/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      const newUser = { role: data.role, name: data.name, token: data.token };
-      setUser(newUser);
-      localStorage.setItem('kc_token', data.token);
-      localStorage.setItem('kc_user', JSON.stringify(newUser));
-      return { success: true, role: data.role };
-    } else {
-      return { success: false, error: data.error };
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        const newUser = { role: data.role, name: data.name, token: data.token };
+        setUser(newUser);
+        localStorage.setItem('kc_token', data.token);
+        localStorage.setItem('kc_user', JSON.stringify(newUser));
+        return { success: true, role: data.role };
+      } else {
+        return { success: false, error: data.error };
+      }
+    } catch (err) {
+      console.error(err);
+      return { success: false, error: "Network Error: Could not reach the server." };
     }
   };
 
   const register = async (name, email, password, role) => {
-    const res = await fetch('http://localhost:5000/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, role })
-    });
-    const data = await res.json();
-    return res.ok ? { success: true } : { success: false, error: data.error };
+    try {
+      const res = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role })
+      });
+      const data = await res.json();
+      return res.ok ? { success: true } : { success: false, error: data.error };
+    } catch (err) {
+      console.error(err);
+      return { success: false, error: "Network Error: Could not reach the server." };
+    }
   };
 
   const logout = () => {

@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { SplashScreen } from '@capacitor/splash-screen';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/Navbar';
+import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
@@ -16,6 +19,9 @@ import Wishlist from './pages/Wishlist';
 import LoadingScreen from './components/LoadingScreen';
 import CartSidebar from './components/CartSidebar';
 import { WishlistProvider } from './context/WishlistContext';
+import Recipes from './pages/Recipes';
+import RecipeDetail from './pages/RecipeDetail';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -29,6 +35,14 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     document.documentElement.classList.add('dark');
+
+    // Capacitor Native Setup
+    if (Capacitor.isNativePlatform()) {
+      // Hide Splash screen once React is mounted and animation is ready
+      setTimeout(() => {
+        SplashScreen.hide();
+      }, 1000);
+    }
   }, []);
 
   return (
@@ -53,10 +67,13 @@ function AppContent() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/users" element={<Users />} />
+              <Route path="/recipes" element={<Recipes />} />
+              <Route path="/recipes/:id" element={<RecipeDetail />} />
             </Routes>
           </main>
 
           <Footer />
+          <BottomNav />
         </div>
       )}
     </>
@@ -65,15 +82,17 @@ function AppContent() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <WishlistProvider>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
           <CartProvider>
-            <AppContent />
+            <WishlistProvider>
+              <AppContent />
+            </WishlistProvider>
           </CartProvider>
-        </WishlistProvider>
-      </AuthProvider>
-    </BrowserRouter>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

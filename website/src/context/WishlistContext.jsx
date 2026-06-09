@@ -1,3 +1,4 @@
+import { API_URL } from '../config/api';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
@@ -14,7 +15,7 @@ export const WishlistProvider = ({ children }) => {
     const fetchWishlist = async () => {
       if (!user || !user.token) return;
       try {
-        const res = await fetch('http://localhost:5000/api/wishlist', {
+        const res = await fetch(`${API_URL}/wishlist`, {
           headers: { 'Authorization': `Bearer ${user.token}` }
         });
         if (res.ok) {
@@ -45,7 +46,7 @@ export const WishlistProvider = ({ children }) => {
     setWishlistItems(prev => [...prev, { product_id: productId, variant_id: variantId }]);
 
     try {
-      const res = await fetch('http://localhost:5000/api/wishlist', {
+      const res = await fetch(`${API_URL}/wishlist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +73,7 @@ export const WishlistProvider = ({ children }) => {
     setWishlistItems(prev => prev.filter(item => item.variant_id !== variantId));
 
     try {
-      const res = await fetch(`http://localhost:5000/api/wishlist/${variantId}`, {
+      const res = await fetch(`${API_URL}/wishlist/${variantId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${user.token}` }
       });

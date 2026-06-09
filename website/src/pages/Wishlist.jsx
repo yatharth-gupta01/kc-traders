@@ -1,3 +1,4 @@
+import { API_URL } from '../config/api';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -25,7 +26,7 @@ const Wishlist = () => {
 
     const fetchStock = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/stock');
+        const res = await fetch(`${API_URL}/stock`);
         if (res.ok) {
           const data = await res.json();
           setStockList(data);

@@ -2,7 +2,7 @@ import { Droplet, Facebook, Instagram, Twitter } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="bg-slate-900 dark:bg-black text-slate-300 py-16 border-t border-white/10">
+    <footer className="bg-slate-900 dark:bg-black text-slate-300 pt-16 pb-32 md:pb-16 border-t border-white/10 pb-safe">
       <div className="container mx-auto px-6 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           

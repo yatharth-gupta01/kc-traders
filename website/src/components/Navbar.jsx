@@ -53,8 +53,12 @@ const Navbar = () => {
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled || !isHome ? 'py-3 glass shadow-md border-b border-slate-200 dark:border-white/5' : 'py-5 bg-transparent'
+        isScrolled || !isHome ? 'glass shadow-md border-b border-slate-200 dark:border-white/5' : 'bg-transparent'
       }`}
+      style={{
+        paddingTop: `calc(env(safe-area-inset-top, 0px) + ${isScrolled || !isHome ? '12px' : '20px'})`,
+        paddingBottom: isScrolled || !isHome ? '12px' : '20px'
+      }}
     >
       <div className="container mx-auto px-6 lg:px-12 flex justify-between items-center">
         {/* Logo */}

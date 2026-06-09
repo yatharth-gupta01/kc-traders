@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, ShoppingBag, ShoppingCart, User } from 'lucide-react';
+import { Home, LayoutGrid, ShoppingCart, Package, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { motion } from 'framer-motion';
@@ -8,57 +8,105 @@ const BottomNav = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { cartItems } = useCart();
+
+  const hideOnRoutes = [
+    '/qr-scanner',
+    '/voice-search',
+    '/order-tracking',
+    '/notifications'
+  ];
+  const shouldHide = hideOnRoutes.includes(location.pathname) || location.pathname.startsWith('/product/');
+  if (shouldHide) return null;
   
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
+  // Define bottom navigation tabs
   const navItems = [
-    { name: 'Home', path: '/', icon: <Home className="w-6 h-6" /> },
-    { name: 'Shop', path: '/shop', icon: <ShoppingBag className="w-6 h-6" /> },
+    { name: 'Home', path: '/', icon: <Home className="w-5.5 h-5.5" /> },
+    { name: 'Categories', path: '/categories', icon: <LayoutGrid className="w-5.5 h-5.5" /> },
     { 
       name: 'Cart', 
-      path: '/checkout', 
+      path: '/cart', 
       icon: (
         <div className="relative">
-          <ShoppingCart className="w-6 h-6" />
+          <ShoppingCart className="w-5.5 h-5.5" />
           {cartItemCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-mustard-500 text-black text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+            <motion.span 
+              initial={{ scale: 0.4 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center rounded-full border border-white dark:border-[#1a1412] leading-none"
+            >
               {cartItemCount}
-            </span>
+            </motion.span>
           )}
         </div>
       ) 
     },
     { 
-      name: 'Account', 
+      name: 'Orders', 
+      path: '/dashboard', 
+      state: { activeTab: 'orders' },
+      icon: <Package className="w-5.5 h-5.5" /> 
+    },
+    { 
+      name: 'Profile', 
       path: user ? '/dashboard' : '/login', 
-      icon: <User className="w-6 h-6" /> 
+      state: { activeTab: 'profile' },
+      icon: <User className="w-5.5 h-5.5" /> 
     }
   ];
 
+  // Helper to determine if a tab is active
+  const getIsActive = (item) => {
+    if (item.name === 'Profile' && !user) {
+      return location.pathname === '/login';
+    }
+    
+    if (item.path === '/dashboard') {
+      const currentTab = location.state?.activeTab || 'orders';
+      return location.pathname === '/dashboard' && currentTab === item.state?.activeTab;
+    }
+    
+    return location.pathname === item.path;
+  };
+
   return (
-    <div className="md:hidden fixed bottom-0 left-0 w-full bg-white dark:bg-[#1a1412] border-t border-slate-200 dark:border-white/10 z-50 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-      <div className="flex justify-around items-center h-16 px-2">
+    <div className="md:hidden fixed bottom-4 left-4 right-4 z-50">
+      <div className="bg-white/80 dark:bg-black/60 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-[2rem] shadow-[0_10px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex justify-around items-center h-18 px-2 pb-safe">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path || (item.path === '/dashboard' && location.pathname.startsWith('/dashboard'));
+          const isActive = getIsActive(item);
           
           return (
             <Link 
               key={item.name} 
               to={item.path}
-              className={`flex flex-col items-center justify-center w-full h-full relative ${
-                isActive ? 'text-mustard-500' : 'text-slate-500 dark:text-slate-400'
+              state={item.state}
+              className={`flex flex-col items-center justify-center w-full h-full relative transition-colors duration-300 ${
+                isActive ? 'text-mustard-600 dark:text-mustard-400' : 'text-slate-400 dark:text-slate-500'
               }`}
             >
+              {/* Active Tab Background Capsule */}
               {isActive && (
                 <motion.div 
-                  layoutId="bottom-nav-indicator"
-                  className="absolute top-0 w-8 h-1 bg-mustard-500 rounded-b-full"
+                  layoutId="bottom-nav-active-pill"
+                  className="absolute inset-y-2 inset-x-2 bg-mustard-500/10 dark:bg-mustard-500/10 rounded-2xl -z-10"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                 />
               )}
-              <div className={`transition-transform duration-300 ${isActive ? '-translate-y-1' : ''}`}>
+
+              {/* Icon Container */}
+              <motion.div 
+                animate={isActive ? { y: -2, scale: 1.1 } : { y: 0, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                className="mb-0.5"
+              >
                 {item.icon}
-              </div>
-              <span className={`text-[10px] font-medium transition-all duration-300 ${isActive ? 'opacity-100 mt-1' : 'opacity-0 h-0 overflow-hidden absolute'}`}>
+              </motion.div>
+
+              {/* Label */}
+              <span className={`text-[9px] font-black uppercase tracking-wider transition-all duration-300 ${
+                isActive ? 'opacity-100 scale-100' : 'opacity-80 scale-95'
+              }`}>
                 {item.name}
               </span>
             </Link>

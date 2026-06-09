@@ -5,8 +5,9 @@ import {
   Package, Truck, Clock, Search, LogOut, CheckCircle, XCircle, 
   Database, Edit3, Save, TrendingUp, AlertTriangle, Activity,
   LayoutDashboard, PieChart as PieChartIcon, ArrowRight,
-  Users, Mail, Store, User, Receipt
+  Users, Mail, Store, User, Receipt, Shield
 } from 'lucide-react';
+import { apiClient } from '../utils/apiClient';
 import { Link } from 'react-router-dom';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -25,6 +26,84 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
   const [activeDateFilter, setActiveDateFilter] = useState('all');
   const [usersList, setUsersList] = useState([]);
   const [userSearchTerm, setUserSearchTerm] = useState('');
+  
+  // Security Upgrade: Monitoring and Backups States
+  const [securityEvents, setSecurityEvents] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [backupsList, setBackupsList] = useState([]);
+  const [telemetry, setTelemetry] = useState(null);
+  const [loadingSecurity, setLoadingSecurity] = useState(false);
+
+  const fetchSecurityData = async () => {
+    setLoadingSecurity(true);
+    try {
+      const res = await apiClient('/admin/monitoring-data');
+      if (res.ok) {
+        const data = await res.json();
+        setSecurityEvents(data.securityEvents || []);
+        setAuditLogs(data.auditLogs || []);
+      }
+      
+      const backupsRes = await apiClient('/admin/backups');
+      if (backupsRes.ok) {
+        const data = await backupsRes.json();
+        setBackupsList(data || []);
+      }
+
+      const healthRes = await apiClient('/health');
+      if (healthRes.ok) {
+        const data = await healthRes.json();
+        setTelemetry(data);
+      }
+    } catch (err) {
+      console.error("Failed to load security logs", err);
+    } finally {
+      setLoadingSecurity(false);
+    }
+  };
+
+  const handleCreateBackup = async () => {
+    try {
+      const res = await apiClient('/admin/backups/create', { method: 'POST' });
+      if (res.ok) {
+        alert("Database backup snapshot successfully created!");
+        fetchSecurityData();
+      } else {
+        alert("Failed to create backup. check permissions.");
+      }
+    } catch (err) {
+      alert("Failed to create backup.");
+    }
+  };
+
+  const handleRestoreBackup = async (filename) => {
+    if (!window.confirm(`Are you absolutely sure you want to restore the database to ${filename}? This will overwrite all active tables.`)) {
+      return;
+    }
+    try {
+      const res = await apiClient('/admin/backups/restore', {
+        method: 'POST',
+        body: JSON.stringify({ filename })
+      });
+      if (res.ok) {
+        alert("Database restored successfully!");
+        fetchSecurityData();
+        fetchOrders();
+        fetchStock();
+      } else {
+        const data = await res.json();
+        alert(`Restore failed: ${data.error}`);
+      }
+    } catch (err) {
+      alert("Failed to restore backup.");
+    }
+  };
+
+  React.useEffect(() => {
+    if (activeTab === 'security') {
+      fetchSecurityData();
+    }
+  }, [activeTab]);
   const [userRoleFilter, setUserRoleFilter] = useState('all');
 
   const [selectedDayObj, setSelectedDayObj] = useState(new Date());
@@ -641,6 +720,164 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
     );
   };
 
+  const renderSecurity = () => (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      {/* Telemetry and System Metrics */}
+      <div className="glass-card bg-white/5 border border-white/10 rounded-3xl p-6">
+        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <Activity className="w-5 h-5 text-mustard-500" />
+          Server Telemetry & Telemetric Health
+        </h3>
+        {telemetry ? (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="p-4 bg-black/30 rounded-2xl border border-white/5">
+              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block mb-1">System Status</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> UP
+              </span>
+            </div>
+            <div className="p-4 bg-black/30 rounded-2xl border border-white/5">
+              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block mb-1">DB Pool Latency</span>
+              <span className="text-xl font-bold text-white font-mono">{telemetry.latency}</span>
+            </div>
+            <div className="p-4 bg-black/30 rounded-2xl border border-white/5">
+              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block mb-1">Server Memory Usage</span>
+              <span className="text-xl font-bold text-white font-mono">
+                {Math.round(telemetry.memory?.rss / 1024 / 1024)} MB
+              </span>
+            </div>
+            <div className="p-4 bg-black/30 rounded-2xl border border-white/5">
+              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block mb-1">Active DB Connections</span>
+              <span className="text-xl font-bold text-white font-mono">{telemetry.pool?.totalConnections || 0}</span>
+            </div>
+          </div>
+        ) : (
+          <p className="text-slate-500 text-xs">Loading telemetry stats...</p>
+        )}
+      </div>
+
+      {/* Database Backups Panel */}
+      <div className="glass-card bg-white/5 border border-white/10 rounded-3xl p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Database className="w-5 h-5 text-mustard-500" />
+              Automated Snapshot Backups
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">Take daily snapshots or restore previous database configurations instantly.</p>
+          </div>
+          <button 
+            onClick={handleCreateBackup}
+            className="px-5 py-3 bg-mustard-500 hover:bg-mustard-600 text-black font-bold text-xs rounded-xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
+          >
+            <Database className="w-4 h-4" /> Create Snapshot
+          </button>
+        </div>
+
+        <div className="overflow-hidden overflow-x-auto border border-white/5 rounded-2xl">
+          <table className="w-full text-left whitespace-nowrap">
+            <thead className="bg-black/30 text-xs font-bold uppercase text-slate-400 border-b border-white/5">
+              <tr>
+                <th className="py-4 px-6">Backup File</th>
+                <th className="py-4 px-6">Size (KB)</th>
+                <th className="py-4 px-6">Created Timestamp</th>
+                <th className="py-4 px-6 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 text-xs text-slate-300">
+              {backupsList.map(b => (
+                <tr key={b.id} className="hover:bg-white/5">
+                  <td className="py-3 px-6 font-mono font-bold text-white">{b.filename}</td>
+                  <td className="py-3 px-6 font-mono">{(b.size_bytes / 1024).toFixed(2)} KB</td>
+                  <td className="py-3 px-6">{new Date(b.created_at).toLocaleString()}</td>
+                  <td className="py-3 px-6 text-center">
+                    <button 
+                      onClick={() => handleRestoreBackup(b.filename)}
+                      className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 text-[10px] font-bold rounded-lg transition-colors"
+                    >
+                      RESTORE
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {backupsList.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="py-8 text-center text-slate-500">No database snapshots found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Logs Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Security Anomaly Logs */}
+        <div className="glass-card bg-white/5 border border-white/10 rounded-3xl p-6 flex flex-col h-[400px]">
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 flex-shrink-0">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+            Security Anomaly logs
+          </h3>
+          <div className="flex-grow overflow-y-auto pr-1 space-y-3 scrollbar-thin">
+            {securityEvents.map(evt => {
+              const badgeColors = {
+                CRITICAL: 'bg-red-500/20 text-red-400 border-red-500/30',
+                HIGH: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                MEDIUM: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+                LOW: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+              };
+              return (
+                <div key={evt.id} className="p-3 bg-black/20 rounded-xl border border-white/5 space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <span className="font-mono text-[10px] text-slate-500">{new Date(evt.timestamp).toLocaleString()}</span>
+                    <span className={`px-2 py-0.5 text-[9px] font-black rounded border ${badgeColors[evt.severity] || badgeColors.LOW}`}>
+                      {evt.severity}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-white">{evt.event_type}</p>
+                  <p className="text-xs text-slate-400 leading-relaxed">{evt.details}</p>
+                  <div className="flex items-center gap-4 text-[10px] text-slate-500 font-mono">
+                    <span>IP: {evt.ip_address}</span>
+                    {evt.email && <span>Email: {evt.email}</span>}
+                  </div>
+                </div>
+              );
+            })}
+            {securityEvents.length === 0 && (
+              <p className="text-slate-500 text-xs py-12 text-center">No anomalies reported.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Administrative Audit Logs */}
+        <div className="glass-card bg-white/5 border border-white/10 rounded-3xl p-6 flex flex-col h-[400px]">
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 flex-shrink-0">
+            <Clock className="w-5 h-5 text-mustard-500" />
+            Audit Action logs
+          </h3>
+          <div className="flex-grow overflow-y-auto pr-1 space-y-3 scrollbar-thin">
+            {auditLogs.map(log => (
+              <div key={log.id} className="p-3 bg-black/20 rounded-xl border border-white/5 space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="font-mono text-[10px] text-slate-500">{new Date(log.timestamp).toLocaleString()}</span>
+                  <span className="text-[10px] font-bold text-mustard-400 uppercase tracking-widest">{log.userName || 'System'}</span>
+                </div>
+                <p className="text-xs font-bold text-white">{log.action}</p>
+                <p className="text-xs text-slate-400 leading-relaxed">{log.details}</p>
+                <div className="text-[10px] text-slate-500 font-mono">
+                  <span>IP: {log.ip_address}</span>
+                </div>
+              </div>
+            ))}
+            {auditLogs.length === 0 && (
+              <p className="text-slate-500 text-xs py-12 text-center">No admin actions logged.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+
   return (
     <div className="min-h-screen pt-28 pb-24 bg-[#0a0500] selection:bg-mustard-500/30">
       <div className="container mx-auto px-6 lg:px-12 relative z-10">
@@ -673,6 +910,9 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
           <button onClick={() => setActiveTab('customers')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'customers' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
             <Users className="w-4 h-4" /> Customers
           </button>
+          <button onClick={() => setActiveTab('security')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'security' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+            <Shield className="w-4 h-4" /> Security & Backups
+          </button>
         </div>
 
         {/* Content Area */}
@@ -681,6 +921,7 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
           {activeTab === 'stock' && <motion.div key="stock">{renderStock()}</motion.div>}
           {activeTab === 'dispatch' && <motion.div key="dispatch">{renderDispatch()}</motion.div>}
           {activeTab === 'customers' && <motion.div key="customers">{renderCustomers()}</motion.div>}
+          {activeTab === 'security' && <motion.div key="security">{renderSecurity()}</motion.div>}
         </AnimatePresence>
 
       </div>

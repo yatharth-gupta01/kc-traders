@@ -8,6 +8,7 @@ import {
   XCircle, ChevronRight, Star, RefreshCw, Receipt, 
   User, Shield, LogOut, Heart, HelpCircle 
 } from 'lucide-react';
+import { apiClient } from '../utils/apiClient';
 
 const CustomerDashboard = () => {
   const { user, logout } = useAuth();
@@ -18,10 +19,64 @@ const CustomerDashboard = () => {
   const [toast, setToast] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  // Security Upgrades: Device Session Management States
+  const [sessions, setSessions] = useState([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+
   const triggerToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
+
+  const fetchSessions = async () => {
+    if (!user || !user.token) return;
+    setLoadingSessions(true);
+    try {
+      const res = await apiClient('/auth/sessions');
+      if (res.ok) {
+        const data = await res.json();
+        setSessions(data || []);
+      }
+    } catch (err) {
+      console.error("Failed to load active sessions", err);
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
+
+  const handleRevokeSession = async (sessionId) => {
+    try {
+      const res = await apiClient(`/auth/sessions/${sessionId}`, { method: 'DELETE' });
+      if (res.ok) {
+        triggerToast("Session terminated successfully.");
+        fetchSessions();
+      }
+    } catch (err) {
+      triggerToast("Failed to revoke session.", "error");
+    }
+  };
+
+  const handleLogoutAllDevices = async () => {
+    if (!window.confirm("Are you sure you want to log out of all active devices?")) {
+      return;
+    }
+    try {
+      const res = await apiClient('/auth/logout-all', { method: 'POST' });
+      if (res.ok) {
+        triggerToast("Logged out of all sessions.");
+        logout();
+        navigate('/login');
+      }
+    } catch (err) {
+      triggerToast("Failed to logout all.", "error");
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'security') {
+      fetchSessions();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -105,12 +160,12 @@ const CustomerDashboard = () => {
         </div>
 
         {/* Mobile Page Controls List */}
-        <div className="flex border-b border-slate-100 dark:border-white/5">
-          {['orders', 'addresses', 'subscriptions'].map((tab) => (
+        <div className="flex border-b border-slate-100 dark:border-white/5 overflow-x-auto no-scrollbar">
+          {['orders', 'addresses', 'subscriptions', 'security'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-colors ${
+              className={`flex-1 py-4 px-3 text-xs font-black uppercase tracking-widest transition-colors whitespace-nowrap ${
                 activeTab === tab ? 'text-mustard-600 dark:text-mustard-400 border-b-2 border-mustard-500' : 'text-slate-400'
               }`}
             >
@@ -245,6 +300,40 @@ const CustomerDashboard = () => {
               </div>
             </div>
           )}
+
+          {activeTab === 'security' && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Active Login Sessions</p>
+                <button 
+                  onClick={handleLogoutAllDevices}
+                  className="px-3 py-1.5 bg-red-500/15 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/35 text-[10px] font-black rounded-xl uppercase tracking-wider transition-colors"
+                >
+                  Revoke All
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {sessions.map(s => (
+                  <div key={s.id} className="glass-card bg-white dark:bg-[#120d0a] border border-slate-100 dark:border-white/5 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-black text-slate-900 dark:text-white truncate">{s.user_agent}</p>
+                      <p className="text-[10px] text-slate-500 mt-1">IP: {s.ip_address} • Active: {new Date(s.last_active).toLocaleString()}</p>
+                    </div>
+                    <button 
+                      onClick={() => handleRevokeSession(s.id)}
+                      className="px-2.5 py-1.5 bg-slate-100 hover:bg-red-500 dark:bg-white/5 dark:hover:bg-red-500 text-slate-600 dark:text-slate-400 hover:text-white dark:hover:text-white text-[9px] font-black rounded-lg transition-colors border border-slate-200 dark:border-white/5"
+                    >
+                      REVOKE
+                    </button>
+                  </div>
+                ))}
+                {sessions.length === 0 && (
+                  <p className="text-center text-slate-500 text-xs py-6">Loading active sessions...</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Account control tray */}
@@ -292,7 +381,8 @@ const CustomerDashboard = () => {
                 { id: 'orders', icon: Package, label: 'Orders' },
                 { id: 'addresses', icon: MapPin, label: 'Addresses' },
                 { id: 'loyalty', icon: Gift, label: 'Loyalty Points' },
-                { id: 'subscriptions', icon: RefreshCw, label: 'Subscriptions' }
+                { id: 'subscriptions', icon: RefreshCw, label: 'Subscriptions' },
+                { id: 'security', icon: Shield, label: 'Security & Devices' }
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -463,6 +553,58 @@ const CustomerDashboard = () => {
                       <span className="font-bold text-xl text-slate-900 dark:text-white">₹2,850 <span className="text-sm text-slate-500 font-normal">/mo</span></span>
                       <button className="text-sm font-bold text-mustard-600 dark:text-mustard-400 hover:text-mustard-700 transition-colors">Manage</button>
                     </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'security' && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-white">Active Device Sessions</h2>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Review the list of devices currently signed into your account.</p>
+                    </div>
+                    <button 
+                      onClick={handleLogoutAllDevices}
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-xl transition-colors shadow-lg active:scale-95"
+                    >
+                      LOGOUT ALL DEVICES
+                    </button>
+                  </div>
+
+                  <div className="glass-card bg-white dark:bg-black/30 border border-slate-100 dark:border-white/5 rounded-3xl overflow-hidden overflow-x-auto shadow-sm">
+                    <table className="w-full text-left whitespace-nowrap text-sm">
+                      <thead className="bg-slate-50 dark:bg-black/40 border-b border-slate-100 dark:border-white/5 text-xs uppercase text-slate-500 font-bold">
+                        <tr>
+                          <th className="py-4 px-6">Device / Browser User Agent</th>
+                          <th className="py-4 px-6">IP Address</th>
+                          <th className="py-4 px-6">Last Active</th>
+                          <th className="py-4 px-6 text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-300">
+                        {sessions.map(s => (
+                          <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                            <td className="py-4 px-6 font-semibold max-w-[300px] truncate">{s.user_agent}</td>
+                            <td className="py-4 px-6 font-mono text-xs">{s.ip_address}</td>
+                            <td className="py-4 px-6">{new Date(s.last_active).toLocaleString()}</td>
+                            <td className="py-4 px-6 text-center">
+                              <button 
+                                onClick={() => handleRevokeSession(s.id)}
+                                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 text-xs font-bold rounded-lg transition-colors"
+                              >
+                                REVOKE
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {sessions.length === 0 && (
+                          <tr>
+                            <td colSpan="4" className="py-8 text-center text-slate-500">Loading active sessions...</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </motion.div>
               )}

@@ -30,6 +30,77 @@ async function initDB() {
         password TEXT NOT NULL,
         name TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'customer' CHECK(role IN ('customer', 'shopkeeper', 'admin')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        failed_attempts INTEGER DEFAULT 0,
+        locked_until TIMESTAMP
+      );
+    `);
+
+    // Ensure failed_attempts and locked_until columns exist in case the table was created previously
+    await client.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_attempts INTEGER DEFAULT 0;
+    `);
+    await client.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP;
+    `);
+
+    // Create Refresh Tokens Table for RTR
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS refresh_tokens (
+        token TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        revoked BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+    `);
+
+    // Create Sessions Table for Device/Session Management
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        ip_address TEXT,
+        user_agent TEXT,
+        last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+    `);
+
+    // Create Security Events Table for anomaly monitoring
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS security_events (
+        id SERIAL PRIMARY KEY,
+        event_type TEXT NOT NULL,
+        ip_address TEXT,
+        user_agent TEXT,
+        email TEXT,
+        severity TEXT NOT NULL,
+        details TEXT,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create Audit Logs Table for administrative actions
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        action TEXT NOT NULL,
+        details TEXT,
+        ip_address TEXT,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      );
+    `);
+
+    // Create Backups Table for business continuity
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS backups (
+        id SERIAL PRIMARY KEY,
+        filename TEXT NOT NULL UNIQUE,
+        size_bytes INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -97,7 +168,7 @@ async function initDB() {
       );
     `);
 
-    console.log("Database initialized. Secured schema loaded.");
+    console.log("Database initialized. Hardened schema loaded.");
 
     // For testing, optionally create an admin immediately if none exists
     const adminRes = await client.query(`SELECT id FROM users WHERE role = 'admin' LIMIT 1`);

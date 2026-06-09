@@ -1,5 +1,6 @@
 import { API_URL } from '../config/api';
 import { createContext, useContext, useState, useEffect } from 'react';
+import { apiClient } from '../utils/apiClient';
 
 const AuthContext = createContext();
 
@@ -15,19 +16,30 @@ export const AuthProvider = ({ children }) => {
     if (token && storedUser) {
       setUser(JSON.parse(storedUser));
     }
+
+    // Global listener for API client forced logouts
+    const handleLogoutEvent = () => {
+      setUser(null);
+    };
+    window.addEventListener('kc-logout', handleLogoutEvent);
+    return () => window.removeEventListener('kc-logout', handleLogoutEvent);
   }, []);
 
   const login = async (email, password) => {
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
+      const res = await apiClient('/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
       
       if (res.ok) {
-        const newUser = { role: data.role, name: data.name, token: data.token };
+        const newUser = { 
+          role: data.role, 
+          name: data.name, 
+          token: data.token,
+          refreshToken: data.refreshToken // Fallback for Capacitor clients
+        };
         setUser(newUser);
         localStorage.setItem('kc_token', data.token);
         localStorage.setItem('kc_user', JSON.stringify(newUser));
@@ -43,9 +55,8 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password, role) => {
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
+      const res = await apiClient('/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, role })
       });
       const data = await res.json();
@@ -56,12 +67,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const localUser = localStorage.getItem('kc_user');
+    const refreshToken = localUser ? JSON.parse(localUser).refreshToken : null;
+    
+    try {
+      await apiClient('/auth/logout', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken })
+      });
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    }
+    
     setUser(null);
     localStorage.removeItem('kc_token');
     localStorage.removeItem('kc_user');
     localStorage.removeItem('kc_cart');
-    window.dispatchEvent(new Event('kc-logout'));
   };
 
   return (

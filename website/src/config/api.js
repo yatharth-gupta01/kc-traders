@@ -9,7 +9,7 @@ const getBaseUrl = () => {
   }
   
   if (Capacitor.isNativePlatform()) {
-    return 'http://192.168.31.230:5000/api';
+    return 'https://kctraders-backend.onrender.com/api';
   }
 
   // Prevent auto-replace script from breaking this file again by splitting the string

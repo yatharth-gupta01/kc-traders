@@ -51,7 +51,11 @@ const OrderSuccess = () => {
   }, [orderId, user]);
 
   const handlePrint = () => {
-    window.print();
+    if (window.AndroidPrint && window.AndroidPrint.printPage) {
+      window.AndroidPrint.printPage();
+    } else {
+      window.print();
+    }
   };
 
   // GST Calculation Logic (Edible vegetable oil attracts 5% GST in India)

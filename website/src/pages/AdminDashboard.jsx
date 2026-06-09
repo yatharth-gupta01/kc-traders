@@ -660,17 +660,17 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white/5 p-1.5 rounded-2xl border border-white/5 w-max">
-          <button onClick={() => setActiveTab('overview')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'overview' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+        <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white/5 p-1.5 rounded-2xl border border-white/5 w-max max-w-full">
+          <button onClick={() => setActiveTab('overview')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'overview' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
             <LayoutDashboard className="w-4 h-4" /> Overview
           </button>
-          <button onClick={() => setActiveTab('stock')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'stock' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+          <button onClick={() => setActiveTab('stock')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'stock' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
             <Database className="w-4 h-4" /> Production & Stock
           </button>
-          <button onClick={() => setActiveTab('dispatch')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'dispatch' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+          <button onClick={() => setActiveTab('dispatch')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'dispatch' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
             <Truck className="w-4 h-4" /> Dispatch Orders
           </button>
-          <button onClick={() => setActiveTab('customers')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'customers' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+          <button onClick={() => setActiveTab('customers')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'customers' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
             <Users className="w-4 h-4" /> Customers
           </button>
         </div>

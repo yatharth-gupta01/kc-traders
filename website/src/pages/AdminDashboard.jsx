@@ -5,7 +5,7 @@ import {
   Package, Truck, Clock, Search, LogOut, CheckCircle, XCircle, 
   Database, Edit3, Save, TrendingUp, AlertTriangle, Activity,
   LayoutDashboard, PieChart as PieChartIcon, ArrowRight,
-  Users, Mail, Store, User
+  Users, Mail, Store, User, Receipt
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -517,7 +517,14 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
                   ₹{order.total.toLocaleString()}
                 </td>
                 <td className="py-5 px-8">
-                  <div className="flex justify-center gap-2">
+                  <div className="flex justify-center items-center gap-2">
+                    <Link 
+                      to="/order-success"
+                      state={{ orderId: order.id, fromDashboard: true }}
+                      className="px-3 py-2 bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold rounded-lg transition-colors border border-white/10 flex items-center gap-1.5"
+                    >
+                      <Receipt className="w-3.5 h-3.5 text-mustard-500" /> Invoice
+                    </Link>
                     {(order.status !== 'Accepted' && order.status !== 'Verified' && order.status !== 'Rejected') && (
                       <>
                         <button onClick={() => handleUpdateStatus(order.id, 'Accepted')} className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors shadow-sm">

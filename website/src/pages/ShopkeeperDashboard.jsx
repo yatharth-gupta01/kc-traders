@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { Package, Truck, FileText, Search, CheckCircle, XCircle, ShoppingCart, Percent, Download } from 'lucide-react';
+import { Package, Truck, FileText, Search, CheckCircle, XCircle, ShoppingCart, Percent, Download, Receipt } from 'lucide-react';
 
 const ShopkeeperDashboard = () => {
   const { user } = useAuth();
@@ -152,6 +152,7 @@ Thank you for your business!
                 <th className="py-5 px-6">Status</th>
                 <th className="py-5 px-6">Items</th>
                 <th className="py-5 px-6 text-right">Amount</th>
+                <th className="py-5 px-6 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -175,6 +176,17 @@ Thank you for your business!
                   </td>
                   <td className="py-4 px-6 text-right font-bold text-slate-900 dark:text-white text-lg">
                     ₹{order.total.toLocaleString()}
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    <div className="flex justify-center">
+                      <Link 
+                        to="/order-success"
+                        state={{ orderId: order.id, fromDashboard: true }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all border border-slate-200 dark:border-white/5"
+                      >
+                        <Receipt className="w-3.5 h-3.5 text-mustard-500" /> Invoice
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

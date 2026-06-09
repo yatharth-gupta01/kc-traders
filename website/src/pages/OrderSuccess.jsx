@@ -15,13 +15,16 @@ const OrderSuccess = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Clear cart upon hitting success page once on mount
-  useEffect(() => {
-    clearCart();
-  }, []);
-
-  // Read order ID from checkout state
+  // Read order ID & navigation source from router state
   const orderId = location.state?.orderId;
+  const fromDashboard = location.state?.fromDashboard;
+
+  // Clear cart upon hitting success page once on mount (skip if viewing past invoice from dashboard)
+  useEffect(() => {
+    if (!fromDashboard) {
+      clearCart();
+    }
+  }, [fromDashboard]);
 
   // Fetch Order Details securely for GST Invoice
   useEffect(() => {

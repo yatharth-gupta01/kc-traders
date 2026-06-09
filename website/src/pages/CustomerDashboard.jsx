@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { Package, MapPin, Gift, Clock, Search, CheckCircle, XCircle, ChevronRight, Star, RefreshCw } from 'lucide-react';
+import { Package, MapPin, Gift, Clock, Search, CheckCircle, XCircle, ChevronRight, Star, RefreshCw, Receipt } from 'lucide-react';
 
 const CustomerDashboard = () => {
   const { user } = useAuth();
@@ -82,7 +82,7 @@ const CustomerDashboard = () => {
                   <p className="font-bold text-slate-900 dark:text-white font-mono">{order.id}</p>
                   <p className="text-xs text-slate-500 mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(order.date).toLocaleString()}</p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-lg font-bold text-slate-900 dark:text-white">₹{order.total.toLocaleString()}</span>
                   <span className={`px-3 py-1 text-[10px] font-bold rounded-full border uppercase tracking-wider ${
                     (order.status === 'Accepted' || order.status === 'Verified') ? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20' :
@@ -91,6 +91,13 @@ const CustomerDashboard = () => {
                   }`}>
                     {order.status}
                   </span>
+                  <Link 
+                    to="/order-success"
+                    state={{ orderId: order.id, fromDashboard: true }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all border border-slate-200 dark:border-white/5"
+                  >
+                    <Receipt className="w-3.5 h-3.5 text-mustard-500" /> Invoice
+                  </Link>
                 </div>
               </div>
               <div className="flex flex-wrap gap-4">

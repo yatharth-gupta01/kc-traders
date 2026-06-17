@@ -51,18 +51,7 @@ const Contact = () => {
               </div>
             </div>
 
-            {/* Google Maps mock/embed container */}
-            <div className="h-64 rounded-2xl overflow-hidden glass-card p-2">
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1m2!1s0x39739a82f3fe6761%3A0xe7ebd402c0fb0e3b!2sJarar%2C%20Uttar%20Pradesh!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0, borderRadius: '12px' }} 
-                allowFullScreen="" 
-                loading="lazy" 
-                referrerPolicy="no-referrer-when-downgrade"
-              ></iframe>
-            </div>
+
           </motion.div>
 
           {/* Form */}

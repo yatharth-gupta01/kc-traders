@@ -19,9 +19,17 @@ const Hero = () => {
       {/* Background Image & Overlay */}
       <motion.div style={{ y, opacity }} className="absolute inset-0 z-0 bg-[#0A0500]">
         <div 
-          className="absolute right-0 top-0 w-full lg:w-[70%] h-full bg-cover lg:bg-[length:auto_100%] bg-center lg:bg-right bg-no-repeat opacity-90"
-          style={{ backgroundImage: 'url("/assets/hero_bottle_sunset_v2.png")' }}
-        />
+          className="absolute right-0 top-0 w-full lg:w-[70%] h-full bg-cover lg:bg-[length:auto_100%] bg-center lg:bg-right bg-no-repeat opacity-90 relative"
+          style={{ backgroundImage: 'url("/assets/hero_bottle_blank_label.png")' }}
+        >
+          {/* Exact HTML Label from Previous Design overlaid onto the blank bottle */}
+          <div className="hidden lg:flex absolute right-[25%] top-[55%] -translate-y-1/2 w-48 h-56 bg-[#0a0500]/80 backdrop-blur-sm border border-mustard-500/40 rounded-xl flex-col items-center justify-center shadow-2xl p-4 overflow-hidden transform rotate-[-1deg]">
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-mustard-600 via-amber-400 to-mustard-600" />
+            <Droplet className="w-8 h-8 text-mustard-500 mb-2 drop-shadow-md fill-mustard-500/20" />
+            <p className="text-[10px] font-black tracking-[0.3em] text-mustard-400 uppercase text-center mb-1">Premium</p>
+            <p className="text-sm font-display font-bold text-white uppercase text-center leading-tight">K.C. Traders<br/>Mustard Oil</p>
+          </div>
+        </div>
         {/* Gradients to blend text & edges */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#0d0702] via-[#0d0702]/95 to-transparent w-full lg:w-[65%]" />
         <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-[#0d0702] via-[#0d0702]/50 to-transparent h-[40%]" />

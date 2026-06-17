@@ -83,7 +83,7 @@ const Contact = () => {
                 Call Us Directly
               </a>
               <a 
-                href="mailto:info@kctraders.com"
+                href="mailto:guptayatharth855@gmail.com"
                 className="w-full py-4 bg-mustard-500 hover:bg-mustard-600 text-slate-900 font-bold rounded-xl transition-colors flex items-center justify-center gap-3 interactive shadow-lg shadow-mustard-500/20"
               >
                 <Mail className="w-5 h-5" />

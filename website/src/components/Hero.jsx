@@ -17,14 +17,14 @@ const Hero = () => {
     <div ref={containerRef} className="relative w-full min-h-screen bg-[#110A03] overflow-hidden flex flex-col justify-between pt-32 pb-10">
       
       {/* Background Image & Overlay */}
-      <motion.div style={{ y, opacity }} className="absolute inset-0 z-0">
+      <motion.div style={{ y, opacity }} className="absolute inset-0 z-0 bg-[#0A0500]">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url("/assets/hero_bottle_sunset.png")' }}
+          className="absolute right-0 top-0 w-full lg:w-[70%] h-full bg-cover lg:bg-[length:auto_100%] bg-center lg:bg-right bg-no-repeat opacity-90"
+          style={{ backgroundImage: 'url("/assets/hero_bottle_sunset_v2.png")' }}
         />
         {/* Gradients to blend text & edges */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0d0702] via-[#0d0702]/80 to-transparent w-full md:w-2/3" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0702] via-transparent to-transparent h-full" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d0702] via-[#0d0702]/95 to-transparent w-full lg:w-[65%]" />
+        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-[#0d0702] via-[#0d0702]/50 to-transparent h-[40%]" />
       </motion.div>
 
       {/* Floating Particles over Background */}

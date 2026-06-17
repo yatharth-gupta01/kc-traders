@@ -61,49 +61,35 @@ const Contact = () => {
             viewport={{ once: true }}
             className="glass-card p-8 md:p-10 rounded-3xl"
           >
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Send us a Message</h3>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Full Name</label>
-                <input 
-                  type="text" 
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-earth-dark/50 border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-mustard-500 text-slate-900 dark:text-white transition"
-                  placeholder="John Doe"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
-                <input 
-                  type="email" 
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-earth-dark/50 border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-mustard-500 text-slate-900 dark:text-white transition"
-                  placeholder="john@example.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Message</label>
-                <textarea 
-                  required
-                  rows="4"
-                  value={formData.message}
-                  onChange={(e) => setFormData({...formData, message: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-earth-dark/50 border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-mustard-500 text-slate-900 dark:text-white transition resize-none"
-                  placeholder="How can we help you?"
-                ></textarea>
-              </div>
-              <button 
-                type="submit" 
-                className="w-full py-4 bg-mustard-500 hover:bg-mustard-600 text-slate-900 font-bold rounded-xl transition-colors flex items-center justify-center gap-2 interactive mt-2"
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Connect Instantly</h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-8">
+              Skip the forms! Choose your preferred method below to instantly reach our team for orders or inquiries.
+            </p>
+            <div className="flex flex-col gap-4">
+              <a 
+                href="https://wa.me/917617787544"
+                target="_blank" 
+                rel="noreferrer"
+                className="w-full py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-3 interactive shadow-lg shadow-green-500/20"
               >
-                <Send className="w-5 h-5" />
-                Submit Inquiry
-              </button>
-            </form>
+                <MessageCircle className="w-5 h-5" />
+                Chat on WhatsApp
+              </a>
+              <a 
+                href="tel:+917617787544"
+                className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors flex items-center justify-center gap-3 interactive shadow-lg"
+              >
+                <Phone className="w-5 h-5" />
+                Call Us Directly
+              </a>
+              <a 
+                href="mailto:info@kctraders.com"
+                className="w-full py-4 bg-mustard-500 hover:bg-mustard-600 text-slate-900 font-bold rounded-xl transition-colors flex items-center justify-center gap-3 interactive shadow-lg shadow-mustard-500/20"
+              >
+                <Mail className="w-5 h-5" />
+                Send an Email
+              </a>
+            </div>
           </motion.div>
         </div>
       </div>

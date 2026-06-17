@@ -19,11 +19,11 @@ const Hero = () => {
       {/* Background Image & Overlay */}
       <motion.div style={{ y, opacity }} className="absolute inset-0 z-0">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-[85%_center] md:bg-center bg-no-repeat"
           style={{ backgroundImage: 'url("/assets/hero_bottle_elegant_font.png")' }}
         />
         {/* Gradients to blend text & edges */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0d0702] via-[#0d0702]/80 to-transparent w-full md:w-2/3" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d0702] via-[#0d0702]/80 to-transparent w-[130%] md:w-2/3" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0d0702] via-transparent to-transparent h-full" />
       </motion.div>
 
@@ -72,7 +72,7 @@ const Hero = () => {
             </div>
 
             {/* Headline */}
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-display font-black text-white leading-[1.05] tracking-tight drop-shadow-2xl">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-black text-white leading-[1.05] tracking-tight drop-shadow-2xl">
               Liquid Gold <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-mustard-400 to-mustard-600">From Agra</span>
             </h1>
@@ -103,7 +103,7 @@ const Hero = () => {
             </div>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto z-20">
               <Link 
                 to="/shop" 
                 className="px-8 py-4 bg-mustard-500 hover:bg-mustard-400 text-slate-900 font-bold rounded-full transition-all shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:shadow-[0_0_50px_rgba(245,158,11,0.5)] flex items-center justify-center gap-3 interactive"

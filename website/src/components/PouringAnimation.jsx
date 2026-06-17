@@ -87,14 +87,14 @@ const PouringAnimation = () => {
 
           {/* Initial Left Text */}
           <motion.div
-            className="absolute inset-x-6 top-32 md:relative md:top-auto flex-1 text-center md:text-left z-30 pointer-events-none"
+            className="absolute inset-x-6 top-20 sm:top-32 md:relative md:top-auto flex-1 text-center md:text-left z-30 pointer-events-none"
             style={{ opacity: titleOpacity, y: titleY }}
           >
-            <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-black/40 backdrop-blur-md border border-mustard-500/30 mb-8 shadow-xl">
+            <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-black/40 backdrop-blur-md border border-mustard-500/30 mb-6 shadow-xl">
               <span className="w-2.5 h-2.5 rounded-full bg-mustard-500 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.8)]"></span>
-              <span className="text-xs font-bold tracking-[0.2em] text-mustard-400 uppercase">Scroll to Pour</span>
+              <span className="text-[10px] sm:text-xs font-bold tracking-[0.2em] text-mustard-400 uppercase">Scroll to Pour</span>
             </div>
-            <h2 className="text-5xl md:text-7xl lg:text-8xl font-display font-black text-white mb-6 tracking-tight leading-[1.1] drop-shadow-2xl">
+            <h2 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-display font-black text-white mb-6 tracking-tight leading-[1.1] drop-shadow-2xl">
               The Cold Press <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-mustard-400 via-amber-500 to-amber-600">Process</span>
             </h2>
@@ -102,7 +102,7 @@ const PouringAnimation = () => {
 
           {/* Center Bottle Container */}
           <motion.div 
-            className="relative w-64 md:w-80 max-w-[40vh] aspect-[1/2] flex justify-center z-20 mt-20 md:mt-0"
+            className="relative w-56 sm:w-64 md:w-80 max-w-[40vh] aspect-[1/2] flex justify-center z-20 mt-36 sm:mt-20 md:mt-0"
             style={{ y: bottleY, opacity: bottleOpacity }}
           >
 
@@ -221,17 +221,17 @@ const PouringAnimation = () => {
 
           {/* Final Right Text */}
           <motion.div
-            className="absolute inset-x-6 bottom-20 md:bottom-auto md:relative flex-1 text-center md:text-right z-30"
+            className="absolute inset-x-6 bottom-16 sm:bottom-20 md:bottom-auto md:relative flex-1 text-center md:text-right z-30 pointer-events-none"
             style={{ opacity: finalTitleOpacity, y: finalTitleY }}
           >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-white mb-6 drop-shadow-2xl">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-white mb-4 sm:mb-6 drop-shadow-2xl">
               Purity Sealed.
             </h2>
-            <p className="text-slate-300 mb-8 max-w-md mx-auto md:mx-0 md:ml-auto text-sm md:text-lg font-light leading-relaxed">
+            <p className="text-slate-300 mb-6 sm:mb-8 max-w-md mx-auto md:mx-0 md:ml-auto text-xs sm:text-sm md:text-lg font-light leading-relaxed">
               Meticulously cold-pressed and bottled at the source to preserve natural pungency, essential nutrients, and authentic flavor.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-end">
-              <a href="#products" className="px-8 py-4 bg-gradient-to-r from-mustard-500 to-amber-600 hover:from-mustard-400 hover:to-amber-500 text-slate-900 font-bold rounded-full transition-all shadow-[0_0_40px_rgba(245,158,11,0.4)] hover:shadow-[0_0_60px_rgba(245,158,11,0.6)] interactive hover:scale-105">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-end pointer-events-auto">
+              <a href="#products" className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-mustard-500 to-amber-600 hover:from-mustard-400 hover:to-amber-500 text-slate-900 font-bold rounded-full transition-all shadow-[0_0_40px_rgba(245,158,11,0.4)] hover:shadow-[0_0_60px_rgba(245,158,11,0.6)] interactive hover:scale-105 text-sm sm:text-base">
                 Shop Our Collection
               </a>
             </div>

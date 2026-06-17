@@ -69,11 +69,11 @@ const Navbar = () => {
         isScrolled || !isHome ? 'glass shadow-md border-b border-slate-200 dark:border-white/5' : 'bg-transparent'
       }`}
       style={{
-        paddingTop: `calc(env(safe-area-inset-top, 0px) + ${isScrolled || !isHome ? '12px' : '20px'})`,
-        paddingBottom: isScrolled || !isHome ? '12px' : '20px'
+        paddingTop: `calc(env(safe-area-inset-top, 0px) + ${isScrolled || !isHome ? '16px' : '24px'})`,
+        paddingBottom: isScrolled || !isHome ? '16px' : '24px'
       }}
     >
-      <div className="container mx-auto px-6 lg:px-12 flex justify-between items-center">
+      <div className="container mx-auto px-6 lg:px-12 flex justify-between items-center relative">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 z-50 interactive group">
           <div className="relative w-8 h-8 md:w-10 md:h-10 text-mustard-500 overflow-hidden flex items-center justify-center">
@@ -81,68 +81,78 @@ const Navbar = () => {
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-mustard-600/30 blur-[2px]" />
           </div>
           <div className="flex flex-col">
-            <span className="font-display font-bold text-xl md:text-2xl leading-none text-slate-900 dark:text-white tracking-tight">K.C. TRADERS</span>
-            <span className="text-[10px] md:text-xs text-mustard-600 dark:text-mustard-400 font-medium tracking-widest uppercase">Pure Mustard Oil</span>
+            <span className={`font-display font-bold text-xl md:text-2xl leading-none tracking-tight transition-colors ${(!isScrolled && isHome) ? 'text-white' : 'text-slate-900 dark:text-white'}`}>K.C. TRADERS</span>
+            <span className="text-[10px] md:text-xs text-mustard-500 font-medium tracking-widest uppercase">Pure Mustard Oil</span>
           </div>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-6 lg:gap-8 flex-1 justify-end">
+        {/* Centered Desktop Nav */}
+        <nav className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <ul className="flex items-center gap-8">
+            {navLinks
+              .filter(link => !(user?.role?.toLowerCase() === 'admin' && link.name === 'Shop Products'))
+              .map((link) => {
+                const isActive = location.pathname === link.href;
+                const baseText = (!isScrolled && isHome) 
+                  ? (isActive ? 'text-mustard-400' : 'text-slate-200 hover:text-mustard-400')
+                  : (isActive ? 'text-mustard-600 dark:text-mustard-400' : 'text-slate-700 dark:text-slate-300 hover:text-mustard-600 dark:hover:text-mustard-400');
+                
+                return (
+                  <li key={link.name}>
+                    <Link 
+                      to={link.href} 
+                      className={`text-sm font-semibold transition-colors relative after:content-[''] after:absolute after:-bottom-1.5 after:left-0 after:h-0.5 after:bg-mustard-500 hover:after:w-full after:transition-all after:duration-300 ${baseText} ${isActive ? 'after:w-full' : 'after:w-0'}`}
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                );
+            })}
+          </ul>
+        </nav>
+
+        {/* Right Actions */}
+        <div className="hidden md:flex items-center gap-4 lg:gap-6 flex-1 justify-end">
           
           {/* Global Search Bar */}
-          <div className="relative group hidden lg:block mr-2">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="relative group hidden lg:block">
+            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
               <Search className="w-4 h-4 text-slate-400 group-focus-within:text-mustard-500 transition-colors" />
             </div>
             <input 
                type="text" 
                placeholder="Search oils..." 
-               className="pl-10 pr-4 py-2 w-48 xl:w-64 bg-slate-100 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-full text-sm focus:outline-none focus:border-mustard-500 focus:ring-1 focus:ring-mustard-500 transition-all placeholder:text-slate-500 dark:text-white"
+               className={`pl-4 pr-10 py-2 w-48 xl:w-56 rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-mustard-500 transition-all ${
+                 (!isScrolled && isHome) 
+                   ? 'bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:bg-white/20' 
+                   : 'bg-slate-100 dark:bg-black/20 border-slate-200 dark:border-white/10 placeholder:text-slate-500 dark:text-white'
+               } border`}
             />
           </div>
-
-          <ul className="flex items-center gap-6">
-            {navLinks
-              .filter(link => !(user?.role?.toLowerCase() === 'admin' && link.name === 'Shop Products'))
-              .map((link) => (
-              <li key={link.name}>
-                <Link 
-                  to={link.href} 
-                  className={`text-sm font-medium transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-mustard-500 hover:after:w-full after:transition-all after:duration-300 ${
-                    location.pathname === link.href 
-                      ? 'text-mustard-600 dark:text-mustard-400 after:w-full' 
-                      : 'text-slate-700 hover:text-mustard-600 dark:text-slate-300 dark:hover:text-mustard-400'
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 lg:gap-4">
             {user && user.role?.toLowerCase() !== 'admin' && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Link 
                   to="/wishlist"
-                  className="relative p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors interactive group"
+                  className={`relative p-2 rounded-full transition-colors interactive group ${(!isScrolled && isHome) ? 'hover:bg-white/10' : 'hover:bg-slate-200 dark:hover:bg-slate-800'}`}
                   aria-label="Wishlist"
                 >
-                  <Heart className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-red-500 transition-colors" />
+                  <Heart className={`w-5 h-5 transition-colors group-hover:text-red-500 ${(!isScrolled && isHome) ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`} />
                   {wishlistItemCount > 0 && (
-                    <span className="absolute 0 top-0 right-0 transform translate-x-1/4 -translate-y-1/4 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-earth-dark">
+                    <span className="absolute 0 top-0 right-0 transform translate-x-1/4 -translate-y-1/4 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                       {wishlistItemCount}
                     </span>
                   )}
                 </Link>
                 <button 
                   onClick={() => setIsCartOpen(true)}
-                  className="relative p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors interactive"
+                  className={`relative p-2 rounded-full transition-colors interactive ${(!isScrolled && isHome) ? 'hover:bg-white/10' : 'hover:bg-slate-200 dark:hover:bg-slate-800'}`}
                   aria-label="Open Cart"
                 >
-                  <ShoppingBag className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+                  <ShoppingBag className={`w-5 h-5 ${(!isScrolled && isHome) ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`} />
                   {cartItemCount > 0 && (
-                    <span className="absolute 0 top-0 right-0 transform translate-x-1/4 -translate-y-1/4 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-earth-dark">
+                    <span className="absolute 0 top-0 right-0 transform translate-x-1/4 -translate-y-1/4 w-4 h-4 bg-mustard-500 text-slate-900 text-[9px] font-bold rounded-full flex items-center justify-center">
                       {cartItemCount}
                     </span>
                   )}
@@ -151,32 +161,32 @@ const Navbar = () => {
             )}
 
             {user ? (
-              <div className="flex items-center gap-4 ml-2 border-l pl-4 border-slate-200 dark:border-slate-800">
+              <div className={`flex items-center gap-4 ml-2 border-l pl-4 ${(!isScrolled && isHome) ? 'border-white/20' : 'border-slate-200 dark:border-slate-800'}`}>
                 <Link to="/dashboard" className="flex flex-col text-right hover:opacity-80 transition cursor-pointer">
-                  <span className="text-sm font-bold text-slate-900 dark:text-white capitalize">{user.name}</span>
-                  <span className="text-[10px] flex items-center justify-end gap-1 text-mustard-600 dark:text-mustard-400 uppercase tracking-widest font-bold">
+                  <span className={`text-sm font-bold capitalize ${(!isScrolled && isHome) ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{user.name}</span>
+                  <span className="text-[10px] flex items-center justify-end gap-1 text-mustard-500 uppercase tracking-widest font-bold">
                     {user.role === 'shopkeeper' ? <Store className="w-3 h-3"/> : <User className="w-3 h-3" />}
-                    {user.role} Dashboard
+                    Dashboard
                   </span>
                 </Link>
                 <button 
                   onClick={handleLogout}
-                  className="p-2 bg-slate-100 hover:bg-red-50 dark:bg-white/5 dark:hover:bg-red-500/10 text-slate-700 hover:text-red-600 dark:text-slate-300 transition-colors rounded-full interactive"
+                  className={`p-2 transition-colors rounded-full interactive ${(!isScrolled && isHome) ? 'bg-white/10 hover:bg-red-500/20 text-white hover:text-red-400' : 'bg-slate-100 hover:bg-red-50 dark:bg-white/5 dark:hover:bg-red-500/10 text-slate-700 hover:text-red-600 dark:text-slate-300'}`}
                   title="Log Out"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
               <Link 
                 to="/login"
-                className="ml-2 flex items-center gap-2 px-5 py-2.5 bg-mustard-50 hover:bg-mustard-100 dark:bg-white/5 dark:hover:bg-white/10 text-mustard-700 dark:text-mustard-400 text-sm font-semibold rounded-full border border-mustard-200 dark:border-white/10 transition-colors interactive"
+                className="ml-2 flex items-center gap-2 px-6 py-2.5 bg-mustard-500 hover:bg-mustard-600 text-slate-900 text-sm font-bold rounded-full transition-all interactive shadow-lg shadow-mustard-500/20"
               >
-                <LogIn className="w-4 h-4" /> Sign In
+                <User className="w-4 h-4" /> Sign In
               </Link>
             )}
           </div>
-        </nav>
+        </div>
 
         {/* Mobile Toggle */}
         <div className="md:hidden flex items-center gap-4 z-50">

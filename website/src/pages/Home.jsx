@@ -13,6 +13,7 @@ import { API_URL } from '../config/api';
 
 // Desktop Components
 import Hero from '../components/Hero';
+import PouringAnimation from '../components/PouringAnimation';
 import About from '../components/About';
 import Products from '../components/Products';
 import Storytelling from '../components/Storytelling';
@@ -379,6 +380,7 @@ const Home = () => {
   const renderDesktopLanding = () => (
     <div className="relative w-full overflow-x-clip">
       <Hero />
+      <PouringAnimation />
       <About />
       <Products />
       <Process />

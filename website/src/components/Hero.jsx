@@ -10,10 +10,14 @@ const Hero = () => {
     offset: ["start start", "end end"]
   });
 
+  // Stage 0: Bottle Entrance
+  const bottleY = useTransform(scrollYProgress, [0, 0.15], [400, 0]);
+  const bottleOpacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
+
   // Stage 1: The Pour
   // Stream comes down
-  const streamOffset = useTransform(scrollYProgress, [0, 0.3], [600, 100]);
-  const streamOpacity = useTransform(scrollYProgress, [0, 0.05, 0.6, 0.7], [0, 1, 1, 0]);
+  const streamOffset = useTransform(scrollYProgress, [0.1, 0.35], [600, 100]);
+  const streamOpacity = useTransform(scrollYProgress, [0, 0.1, 0.6, 0.7], [0, 1, 1, 0]);
 
   // Stage 2: The Fill
   // Liquid rises inside the bottle mask
@@ -97,7 +101,10 @@ const Hero = () => {
           </motion.div>
 
           {/* Center Bottle Container */}
-          <div className="relative w-64 md:w-80 max-w-[40vh] aspect-[1/2] flex justify-center z-20 mt-20 md:mt-0">
+          <motion.div 
+            className="relative w-64 md:w-80 max-w-[40vh] aspect-[1/2] flex justify-center z-20 mt-20 md:mt-0"
+            style={{ y: bottleY, opacity: bottleOpacity }}
+          >
 
             {/* Glowing Backdrop for filled bottle */}
             <motion.div
@@ -210,7 +217,7 @@ const Hero = () => {
               </div>
             </motion.div>
 
-          </div>
+          </motion.div>
 
           {/* Final Right Text */}
           <motion.div

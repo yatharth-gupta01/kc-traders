@@ -54,7 +54,7 @@ const BottomNav = () => {
       state: { activeTab: 'profile' },
       icon: <User className="w-5.5 h-5.5" /> 
     }
-  ];
+  ].filter(item => !(item.name === 'Cart' && user?.role?.toLowerCase() === 'admin'));
 
   // Helper to determine if a tab is active
   const getIsActive = (item) => {

@@ -34,7 +34,7 @@ const VoiceSearchScreen = () => {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-mustard-500/10 rounded-full blur-3xl" />
 
       {/* Header overlay */}
-      <div className="px-6 py-4 bg-transparent border-b border-white/5 flex items-center justify-between sticky top-0 z-40">
+      <div className="px-6 py-4 bg-transparent border-b border-white/5 flex items-center justify-between relative z-10">
         <Link to="/" className="p-2 bg-white/5 rounded-xl border border-white/10 active:scale-95 text-slate-300">
           <ChevronLeft className="w-5 h-5" />
         </Link>

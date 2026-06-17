@@ -3,12 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Trash2, ArrowRight, Truck, ShieldCheck, Ticket, Plus, Minus } from 'lucide-react';
+import { ShoppingCart, Trash2, ArrowRight, Truck, ShieldCheck, Ticket, Plus, Minus, ChevronRight } from 'lucide-react';
 
 const CartScreen = () => {
   const { cartItems, addToCart, removeFromCart, getCartSubtotal } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (user?.role === 'admin') {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const cartSubtotal = getCartSubtotal();
   const deliveryFee = cartSubtotal > 1500 || cartSubtotal === 0 ? 0 : 50;
@@ -27,7 +33,7 @@ const CartScreen = () => {
   return (
     <div className="min-h-screen pt-24 pb-28 bg-[#f8f9fa] dark:bg-[#0c0806] text-slate-900 dark:text-white flex flex-col">
       {/* Header */}
-      <div className="px-6 py-4 bg-white dark:bg-black/20 border-b border-slate-100 dark:border-white/5 flex items-center justify-between sticky top-0 z-40 backdrop-blur-xl">
+      <div className="px-6 py-4 bg-white dark:bg-black/20 border-b border-slate-100 dark:border-white/5 flex items-center justify-between relative z-10 backdrop-blur-xl">
         <h1 className="text-2xl font-display font-black text-slate-900 dark:text-white">
           Basket <span className="text-mustard-500">Summary</span>
         </h1>

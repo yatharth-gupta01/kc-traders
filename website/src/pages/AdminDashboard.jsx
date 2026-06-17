@@ -896,33 +896,43 @@ const AdminDashboard = ({ user, logout, orders, stock, fetchOrders, fetchStock, 
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white/5 p-1.5 rounded-2xl border border-white/5 w-max max-w-full">
-          <button onClick={() => setActiveTab('overview')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'overview' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-            <LayoutDashboard className="w-4 h-4" /> Overview
-          </button>
-          <button onClick={() => setActiveTab('stock')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'stock' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-            <Database className="w-4 h-4" /> Production & Stock
-          </button>
-          <button onClick={() => setActiveTab('dispatch')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'dispatch' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-            <Truck className="w-4 h-4" /> Dispatch Orders
-          </button>
-          <button onClick={() => setActiveTab('customers')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'customers' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-            <Users className="w-4 h-4" /> Customers
-          </button>
-          <button onClick={() => setActiveTab('security')} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === 'security' ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-            <Shield className="w-4 h-4" /> Security & Backups
-          </button>
-        </div>
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Sidebar Navigation */}
+          <div className="w-full md:w-64 flex-shrink-0">
+            <div className="glass-card bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl p-4 flex flex-row md:flex-col gap-2 overflow-x-auto no-scrollbar">
+              {[
+                { id: 'overview', icon: LayoutDashboard, label: 'Overview' },
+                { id: 'stock', icon: Database, label: 'Production & Stock' },
+                { id: 'dispatch', icon: Truck, label: 'Dispatch Orders' },
+                { id: 'customers', icon: Users, label: 'Customers' },
+                { id: 'security', icon: Shield, label: 'Security & Backups' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all whitespace-nowrap ${
+                    activeTab === tab.id 
+                      ? 'bg-mustard-500 text-black shadow-lg shadow-mustard-500/20' 
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <tab.icon className="w-4 h-4" /> {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        {/* Content Area */}
-        <AnimatePresence mode="wait">
-          {activeTab === 'overview' && <motion.div key="overview">{renderOverview()}</motion.div>}
-          {activeTab === 'stock' && <motion.div key="stock">{renderStock()}</motion.div>}
-          {activeTab === 'dispatch' && <motion.div key="dispatch">{renderDispatch()}</motion.div>}
-          {activeTab === 'customers' && <motion.div key="customers">{renderCustomers()}</motion.div>}
-          {activeTab === 'security' && <motion.div key="security">{renderSecurity()}</motion.div>}
-        </AnimatePresence>
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            <AnimatePresence mode="wait">
+              {activeTab === 'overview' && <motion.div key="overview">{renderOverview()}</motion.div>}
+              {activeTab === 'stock' && <motion.div key="stock">{renderStock()}</motion.div>}
+              {activeTab === 'dispatch' && <motion.div key="dispatch">{renderDispatch()}</motion.div>}
+              {activeTab === 'customers' && <motion.div key="customers">{renderCustomers()}</motion.div>}
+              {activeTab === 'security' && <motion.div key="security">{renderSecurity()}</motion.div>}
+            </AnimatePresence>
+          </div>
+        </div>
 
       </div>
     </div>

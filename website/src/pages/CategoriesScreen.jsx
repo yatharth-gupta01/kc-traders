@@ -73,7 +73,7 @@ const CategoriesScreen = () => {
   return (
     <div className="min-h-screen pt-24 pb-28 bg-[#f8f9fa] dark:bg-[#0c0806] text-slate-900 dark:text-white flex flex-col">
       {/* Header Search Bar Area */}
-      <div className="px-6 py-4 bg-white dark:bg-black/20 border-b border-slate-100 dark:border-white/5 flex flex-col gap-3 sticky top-0 z-40 backdrop-blur-xl">
+      <div className="px-6 py-4 bg-white dark:bg-black/20 border-b border-slate-100 dark:border-white/5 flex flex-col gap-3 relative z-10 backdrop-blur-xl">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-display font-black text-slate-900 dark:text-white">
             Product <span className="text-mustard-500">Aisle</span>

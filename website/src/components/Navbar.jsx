@@ -9,6 +9,7 @@ import { useWishlist } from '../context/WishlistContext';
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
   const { user, logout } = useAuth();
   const { cartItems, setIsCartOpen } = useCart();
@@ -22,6 +23,14 @@ const Navbar = () => {
   const wishlistItemCount = wishlistItems ? wishlistItems.length : 0;
 
   useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
@@ -29,9 +38,13 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  if (isMobile && isHome) {
+    return null;
+  }
+
   const navLinks = [
     { name: 'Home', href: '/' },
-    ...(user?.role === 'admin' 
+    ...(user?.role?.toLowerCase() === 'admin' 
       ? [
           { name: 'Users', href: '/users' },
           { name: 'Dashboard', href: '/dashboard' }
@@ -90,7 +103,7 @@ const Navbar = () => {
 
           <ul className="flex items-center gap-6">
             {navLinks
-              .filter(link => !(user?.role === 'admin' && link.name === 'Shop Products'))
+              .filter(link => !(user?.role?.toLowerCase() === 'admin' && link.name === 'Shop Products'))
               .map((link) => (
               <li key={link.name}>
                 <Link 
@@ -108,7 +121,7 @@ const Navbar = () => {
           </ul>
           
           <div className="flex items-center gap-4">
-            {user && user.role !== 'admin' && (
+            {user && user.role?.toLowerCase() !== 'admin' && (
               <div className="flex items-center gap-2">
                 <Link 
                   to="/wishlist"
@@ -167,7 +180,7 @@ const Navbar = () => {
 
         {/* Mobile Toggle */}
         <div className="md:hidden flex items-center gap-4 z-50">
-          {user && user.role !== 'admin' && (
+          {user && user.role?.toLowerCase() !== 'admin' && (
             <button 
               onClick={() => setIsCartOpen(true)}
               className="relative p-1 interactive"
@@ -201,7 +214,7 @@ const Navbar = () => {
           >
             <ul className="flex flex-col gap-6 text-center">
               {navLinks
-                 .filter(link => !(user?.role === 'admin' && link.name === 'Shop Products'))
+                 .filter(link => !(user?.role?.toLowerCase() === 'admin' && link.name === 'Shop Products'))
                  .map((link, i) => (
                 <motion.li 
                   key={link.name}

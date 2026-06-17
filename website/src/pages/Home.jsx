@@ -20,6 +20,7 @@ import Quality from '../components/Quality';
 import Gallery from '../components/Gallery';
 import Testimonials from '../components/Testimonials';
 import Contact from '../components/Contact';
+import Process from '../components/Process';
 
 const Home = () => {
   const { user } = useAuth();
@@ -380,6 +381,7 @@ const Home = () => {
       <Hero />
       <About />
       <Products />
+      <Process />
       <Storytelling />
       <Quality />
       <Gallery />

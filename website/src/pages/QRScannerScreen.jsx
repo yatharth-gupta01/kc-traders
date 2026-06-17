@@ -42,7 +42,7 @@ const QRScannerScreen = () => {
       )}
 
       {/* Header overlay */}
-      <div className="px-6 py-4 bg-black/60 border-b border-white/5 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md">
+      <div className="px-6 py-4 bg-black/60 border-b border-white/5 flex items-center justify-between relative z-10 backdrop-blur-md">
         <Link to="/" className="p-2 bg-white/5 rounded-xl border border-white/10 active:scale-95 text-slate-300">
           <ChevronLeft className="w-5 h-5" />
         </Link>

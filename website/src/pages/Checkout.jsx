@@ -424,7 +424,7 @@ const Checkout = () => {
     return (
       <div className="min-h-screen pt-24 pb-28 bg-[#f8f9fa] dark:bg-[#0c0806] text-slate-900 dark:text-white flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 bg-white dark:bg-black/20 border-b border-slate-100 dark:border-white/5 flex items-center gap-4 sticky top-0 z-40 backdrop-blur-xl">
+        <div className="px-6 py-4 bg-white dark:bg-black/20 border-b border-slate-100 dark:border-white/5 flex items-center gap-4 relative z-10 backdrop-blur-xl">
           <button 
             onClick={() => activeStep > 1 ? prevStep() : navigate('/cart')}
             className="p-2 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 active:scale-95 text-slate-600 dark:text-slate-400"

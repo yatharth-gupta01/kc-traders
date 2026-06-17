@@ -392,7 +392,7 @@ const Home = () => {
     </div>
   );
 
-  return isMobile ? renderMobileDashboard() : renderDesktopLanding();
+  return renderDesktopLanding();
 };
 
 export default Home;

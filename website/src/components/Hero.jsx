@@ -110,12 +110,6 @@ const Hero = () => {
               >
                 Shop Now <ArrowRight className="w-5 h-5" />
               </Link>
-              <Link 
-                to="/about" 
-                className="px-8 py-4 border border-white/30 hover:bg-white/10 text-white font-bold rounded-full transition-all flex items-center justify-center gap-3 interactive"
-              >
-                Our Story <Play className="w-4 h-4 fill-white" />
-              </Link>
             </div>
           </motion.div>
 

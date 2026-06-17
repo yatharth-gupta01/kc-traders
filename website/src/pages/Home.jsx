@@ -23,7 +23,7 @@ import Testimonials from '../components/Testimonials';
 import Contact from '../components/Contact';
 import Process from '../components/Process';
 
-const Home = () => {
+const Home = ({ isAppView = false }) => {
   const { user } = useAuth();
   const { cartItems, addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -392,7 +392,7 @@ const Home = () => {
     </div>
   );
 
-  return renderDesktopLanding();
+  return isAppView ? renderMobileDashboard() : renderDesktopLanding();
 };
 
 export default Home;

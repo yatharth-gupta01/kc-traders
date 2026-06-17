@@ -103,6 +103,7 @@ function AppContent() {
           <main className="flex-grow">
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/app" element={<Home isAppView={true} />} />
               <Route path="/shop" element={<Shop />} />
               <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/shop/:id" element={<ProductDetails />} />
